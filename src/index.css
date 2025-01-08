@@ -1,0 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Delius&family=Londrina+Shadow&family=Pacifico&family=Schoolbell&family=Sour+Gummy:ital,wght@0,100..900;1,100..900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Magnifico';
+  src: url('src\\assets\\fonts\\Magnifico Daytime ITC Std Regular.otf') format('opentype'); /* Adjust path */
+  font-weight: normal;
+  font-style: normal;
+}
+
+.text-outline {
+    -webkit-text-stroke: 2px white; /* Outline width and color */
+    color: white; /* Fill color */
+  }
