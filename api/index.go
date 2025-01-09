@@ -154,6 +154,7 @@ func getImages(c *gin.Context) {
 
 // Serve as a Vercel function
 func Handler(w http.ResponseWriter, r *http.Request) {
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 
 	// Routes
