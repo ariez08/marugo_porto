@@ -1,7 +1,6 @@
 {
     "routes":[
-        {"src":"/(.*)",
-        "dest":"/api"}
+        {"functions":"/api"}
     ]    
 }
   
