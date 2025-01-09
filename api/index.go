@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"database/sql"
@@ -6,9 +6,9 @@ import (
 	"io"
 	"log"
 	"net/http"
-	
+	"os"
+
 	"github.com/gin-gonic/gin"
-	"github.com/gin-contrib/cors"
 	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -16,17 +16,22 @@ import (
 var db *sql.DB
 
 func init() {
+	// Get the database URL from the environment variable
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		log.Fatal("DATABASE_URL environment variable is not set")
+	}
+
+	// Connect to the database
 	var err error
-	db, err = sql.Open("postgres", "user=postgres password=Kuli908 dbname=postgres host=localhost sslmode=disable")
+	db, err = sql.Open("postgres", databaseURL)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to connect to the database: %v", err)
 	}
 }
 
 func ping(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"message": "pong",
-	})
+	c.JSON(http.StatusOK, gin.H{"message": "pong"})
 }
 
 func loginUser(c *gin.Context) {
@@ -93,7 +98,6 @@ func createUser(c *gin.Context) {
 		"message": "User created successfully",
 	})
 }
-
 
 func uploadImage(c *gin.Context) {
 	file, _, err := c.Request.FormFile("image")
@@ -243,41 +247,20 @@ func addCategory(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Category added successfully"})
 }
 
-func main() {
-	r := gin.Default()
+func Handler(w http.ResponseWriter, r *http.Request) {
+	router := gin.Default()
 
-	// Konfigurasi CORS
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
-		AllowHeaders:     []string{"Content-Type"},
-		AllowCredentials: true,
-	}))
+	// Routes
+	router.GET("/ping", ping)
+	router.POST("/login", loginUser)
+	router.POST("/create", createUser)
+	router.POST("/upload", uploadImage)
+	router.GET("/image/:id", getImage)
+	router.GET("/images", getImages)
+	router.DELETE("/images/:id", deleteImage)
+	router.GET("/categories", getCategories)
+	router.POST("/categories", addCategory)
 
-	r.OPTIONS("/*path", func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", "http://localhost:5173")
-		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
-		c.Header("Access-Control-Allow-Headers", "Content-Type")
-		c.Header("Access-Control-Allow-Credentials", "true")
-		c.Status(http.StatusOK)
-	})	
-
-	r.GET("/ping", ping)
-	
-	// Route User
-	r.POST("/login", loginUser)
-	r.POST("/create", createUser)
-
-	// Route Image
-	r.POST("/upload", uploadImage)
-	r.GET("/image/:id", getImage)
-	r.GET("/images", getImages)
-	r.DELETE("/images/:id", deleteImage)
-
-	// Route Categories
-	r.GET("/categories", getCategories)
-	r.POST("/categories", addCategory)
-
-	// Menjalankan server di port 8080
-	r.Run(":8080")
+	// Serve as a Vercel serverless function
+	router.ServeHTTP(w, r)
 }
