@@ -22,7 +22,7 @@ const CapsuleButton: React.FC<CapsuleButtonProps> = ({ text, onClick, to, classN
   };
 
   return (
-    <div className='relative mt-4'>
+    <div className='relative md:mt-4 ssm:ml-8 md:ml-0'>
       {/* Bayangan Button */}
       <div
         className={`absolute -z-60 top-2 left-3 w-full h-full rounded-full opacity-85 bg-black-100`}
@@ -30,7 +30,7 @@ const CapsuleButton: React.FC<CapsuleButtonProps> = ({ text, onClick, to, classN
       
       <button
         onClick={handleClick}
-        className={`relative px-6 py-1 text-sm text-black-100 ${className} border border-black-200 rounded-full hover:bg-gray-100`}
+        className={`relative px-6 py-1 text-sm text-nowrap text-black-100 ${className} border border-black-200 rounded-full hover:bg-gray-100`}
       >
         {text}
       </button>

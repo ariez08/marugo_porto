@@ -24,10 +24,10 @@ const HomeCard: React.FC<HomeCardProps> = ({
 }) => {
   return (
     <motion.div 
-      className="group flex flex-col items-center"
+      className="group flex md:flex-col items-center"
       animate={{ y: [0, -10, 0] }} // Bounce effect
       transition={{
-        duration: 2,
+        duration: 3,
         repeat: Infinity,
         repeatType: "loop",
         ease: "easeInOut",

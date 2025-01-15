@@ -20,7 +20,7 @@ const Main: React.FC = () => {
             </div>
             <p className="font-school">Welcome to my website, hope you like it :D</p>
           </div>
-          <div className="flex flex-row gap-4 items-center justify-center p-8 font-bold">
+          <div className="flex md:flex-row ssm:flex-col gap-4 items-center justify-center ssm:p-2 md:p-8 font-bold place-items-center">
             <HomeCard 
               bgColor="bg-blue" 
               imgSrc={IconPic1} 
@@ -31,7 +31,7 @@ const Main: React.FC = () => {
               buttonLink="/"
             />
             {/* arrow 1 */}
-            <div className="w-48"><img src={ArrowIcon} alt="Arrow" className="object-none"/></div>
+            <div className="hidden md:block w-48"><img src={ArrowIcon} alt="Arrow" className="object-none"/></div>
             <HomeCard 
               bgColor="bg-yellow-200" 
               imgSrc={IconPic2} 
@@ -41,7 +41,7 @@ const Main: React.FC = () => {
               buttonLink="/collection"
             />
             {/* arrow 2 */}
-            <div className="w-48"><img src={ArrowIcon} alt="Arrow" className="object-none"/></div>
+            <div className="hidden md:block w-48"><img src={ArrowIcon} alt="Arrow" className="object-none"/></div>
             <HomeCard 
               bgColor="bg-blue" 
               imgSrc={IconPic3} 
