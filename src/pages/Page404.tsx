@@ -1,5 +1,6 @@
 import Nav from "../components/nav";
 import Footer from "../components/footer";
+import CapsuleButton from "../components/capsule_button";
 import { motion } from "framer-motion";
 
 import Emoji from "../assets/emoji.png"
@@ -9,7 +10,7 @@ const FourOFour: React.FC = () => {
         <div className="relative bg-pink flex flex-col min-h-screen">
             <Nav text="Page Not Found"/>
             <div className="relative flex-grow flex flex-col items-center justify-center">
-                <div className="w-[10vw] p-2">
+                <div className="md:w-[10vw] ssm:w-[40vw] p-2">
                     <motion.img 
                         src={Emoji}
                         className="object-cover"
@@ -21,8 +22,9 @@ const FourOFour: React.FC = () => {
                     </motion.img>
                 </div>
                 <div className="mt-2">
-                    <h1 className="font-bold text-white font-school text-6xl">404 Page Not Found</h1>
+                    <h1 className="font-bold text-white font-school md:text-6xl ssm:text-4xl">404 Page Not Found</h1>
                 </div>
+                <CapsuleButton text="Home" className="bg-white" to="/"></CapsuleButton>
             </div>
             <Footer/>
         </div>
