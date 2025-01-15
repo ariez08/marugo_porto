@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { AiOutlineClose } from "react-icons/ai";
 import { HiMenuAlt2} from "react-icons/hi";
 import { useState } from "react";
+import { div } from 'framer-motion/client';
 
 const Nav = ({text}: {text: string}) => {
   const [isOpen, setIsOpen] = useState<boolean>(false); 
@@ -24,7 +25,7 @@ const Nav = ({text}: {text: string}) => {
   };
 
   return (
-      <div className="flex items-center justify-between p-3 lg:flex-row text-white bg-blue">
+      <div className="flex items-center justify-between md:p-3 ssm:p-2 gap-2 lg:flex-row text-white bg-blue">
         <div className="basis-1/4">
           <button onClick={toggleDropdown} className="px-4 text-3xl">
             {isOpen ? <AiOutlineClose /> : <HiMenuAlt2 />}
@@ -58,8 +59,17 @@ const Nav = ({text}: {text: string}) => {
           <p className="font-nav font-bold text-3xl text-center">{text}</p>
         </div>
 
-        <div className="basis-1/4">
-          {(isAuthenticated && user) ? <h1 className='capitalize'>Hai {user}</h1>: <h1></h1>}
+        <div className="relative basis-1/4 place-items-center ">
+          {(isAuthenticated && user) ? 
+            <div className='flex rounded-lg md:border-2 border-yellow-200 md:ml-8'>
+            <h1 
+              className='font-school md:text-base font-bold ssm:text-sm capitalize md:no-underline ssm:underline ssm:underline-offset-2 ssm:decoration-yellow-200 md:px-1'
+            >
+              Hai {user}
+            </h1>
+            <h1 className='text-sm'>😘</h1>
+            </div>
+            : <h1></h1>}
         </div>
       </div>
   );
