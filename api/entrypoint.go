@@ -1,4 +1,4 @@
-package handler
+package api
 
 import (
 	"database/sql"
@@ -14,8 +14,14 @@ import (
 )
 
 var db *sql.DB
+var app *gin.Engine
 
 func init() {
+	gin.SetMode(gin.ReleaseMode)
+	app = gin.New()
+	r := app.Group("/api")
+	myRouter(r)
+
 	// Fetch DATABASE_URL from environment variables
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
@@ -152,17 +158,19 @@ func getImages(c *gin.Context) {
 	c.JSON(http.StatusOK, images)
 }
 
+func myRouter(r *gin.RouterGroup) {
+	// Routes
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"message": "HELLOOOOO"})
+	})
+	r.GET("/ping", ping)
+	r.POST("/login", loginUser)
+	r.POST("/create", createUser)
+	r.POST("/upload", uploadImage)
+	r.GET("/images", getImages)
+}
+
 // Serve as a Vercel function
 func Handler(w http.ResponseWriter, r *http.Request) {
-	gin.SetMode(gin.ReleaseMode)
-	router := gin.Default()
-
-	// Routes
-	router.GET("/ping", ping)
-	router.POST("/login", loginUser)
-	router.POST("/create", createUser)
-	router.POST("/upload", uploadImage)
-	router.GET("/images", getImages)
-
-	router.ServeHTTP(w, r)
+	app.ServeHTTP(w, r)
 }
