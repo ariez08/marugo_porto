@@ -96,7 +96,7 @@ const Collection = () => {
 
         {showImages && (
           <div 
-            className="mx-4 p-4 overflow-y-scroll overflow-x-hidden h-[500px] md:w-1/2 grid md:grid-cols-4 ssm:grid-cols-2 gap-8 border-4 border-white rounded-lg" 
+            className="mx-4 p-4 overflow-y-scroll overflow-x-hidden h-[70vh] md:w-[75vw] grid lg:grid-cols-4 sm:grid-cols-3 ssm:grid-cols-2 gap-8 border-4 border-white rounded-lg" 
             style={{ gridAutoRows: "70%" }}
           >
             {loading ? (

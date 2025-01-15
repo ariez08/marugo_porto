@@ -5,7 +5,6 @@ import { useAuth } from "../context/AuthContext";
 import { AiOutlineClose } from "react-icons/ai";
 import { HiMenuAlt2} from "react-icons/hi";
 import { useState } from "react";
-import { div } from 'framer-motion/client';
 
 const Nav = ({text}: {text: string}) => {
   const [isOpen, setIsOpen] = useState<boolean>(false); 
