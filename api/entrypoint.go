@@ -158,16 +158,80 @@ func getImages(c *gin.Context) {
 	c.JSON(http.StatusOK, images)
 }
 
+func deleteImage(c *gin.Context) {
+	id := c.Param("id")
+
+	// Hapus dari database
+	_, err := db.Exec("DELETE FROM images WHERE id = $1", id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete image from database"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Image deleted successfully"})
+}
+
+func getCategories(c *gin.Context) {
+	rows, err := db.Query("SELECT id, name FROM categories")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve categories"})
+		return
+	}
+	defer rows.Close()
+
+	var categories []gin.H
+
+	for rows.Next() {
+		var id int
+		var name string
+		err := rows.Scan(&id, &name)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan category data"})
+			return
+		}
+
+		categories = append(categories, gin.H{
+			"id":   id,
+			"name": name,
+		})
+	}
+
+	c.JSON(http.StatusOK, categories)
+}
+
+func addCategory(c *gin.Context) {
+	var input struct {
+		Name string `json:"name" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	_, err := db.Exec("INSERT INTO categories (name) VALUES ($1)", input.Name)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add category"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Category added successfully"})
+}
+
 func myRouter(r *gin.RouterGroup) {
 	// Routes
-	r.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "HELLOOOOO"})
-	})
 	r.GET("/ping", ping)
+
+	// Images
 	r.POST("/login", loginUser)
 	r.POST("/create", createUser)
 	r.POST("/upload", uploadImage)
 	r.GET("/images", getImages)
+	r.DELETE("/images/:id", deleteImage)
+
+	// Route Categories
+	r.GET("/categories", getCategories)
+	r.POST("/categories", addCategory)
 }
 
 // Serve as a Vercel function
