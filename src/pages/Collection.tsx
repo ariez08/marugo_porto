@@ -24,9 +24,9 @@ const Collection = () => {
     const isLoggingOut = localStorage.getItem("isLoggingOut") === "true";
     console.log("isLoggingOut", isLoggingOut)
     if (localStorage.getItem("isLoggingOut") === "true") {
-      // localStorage.removeItem("isLoggingOut"); // Clear the temporary flag
-      localStorage.setItem("isAuthenticated", "false");
-      return <Navigate to="/home" replace />;
+      // localStorage.setItem("isAuthenticated", "false");
+      localStorage.removeItem("isLoggingOut"); // Clear the temporary flag
+      return <Navigate to="/" replace />;
     }
     return <Navigate to="/im-not-supposed-here" replace />;
   }
@@ -96,7 +96,7 @@ const Collection = () => {
 
         {showImages && (
           <div 
-            className="mx-4 p-4 overflow-y-scroll overflow-x-hidden h-[500px] w-1/2 grid grid-cols-4 gap-8 border-4 border-white rounded-lg" 
+            className="mx-4 p-4 overflow-y-scroll overflow-x-hidden h-[500px] md:w-1/2 grid md:grid-cols-4 ssm:grid-cols-2 gap-8 border-4 border-white rounded-lg" 
             style={{ gridAutoRows: "70%" }}
           >
             {loading ? (
@@ -141,16 +141,16 @@ const Collection = () => {
           {selectedImage && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-60">
               <motion.div 
-                className="relative bg-pink rounded shadow-xl p-4 pr-8 max-w-5xl flex"
+                className="relative bg-pink rounded shadow-xl p-4 pr-8 md:max-w-5xl flex md:flex-row ssm:flex-col"
                 layoutId={`image-${selectedImage.id}`} // Shared layout ID
                 transition={{ duration: 0.3, ease: "easeOut" }}
               >
                 <img
                   src={selectedImage.image}
                   alt={selectedImage.name}
-                  className="max-w-3xl max-h-[90vh] object-contain rounded-lg border-2 border-gray-300 bg-gradient-to-r from-purple-100 to-purple-200"
+                  className="md:max-w-3xl ssm:max-w-[80vw] md:max-h-[90vh] ssm:max-h-[50vh] object-contain rounded-lg border-2 border-gray-300 bg-gradient-to-r from-purple-100 to-purple-200"
                 />
-                <div className="ml-4 flex flex-col justify-between">
+                <div className="ml-4 ssm:m-3 flex flex-row md:flex-col justify-between">
                   <div className="p-2 bg-white rounded-xl">
                     <h2 className="text-xl font-bold mb-1 ml-1 capitalize font-name">{selectedImage.name}</h2>
                     <p className="px-2 py-1 text-sm bg-white-300 rounded-lg">{selectedImage.description}</p>
@@ -160,11 +160,11 @@ const Collection = () => {
                       handleDelete(selectedImage.id);
                       setSelectedImage(null);
                     }} 
-                    className="px-4 py-2 bg-red text-white rounded hover:bg-red-700"
+                    className="w-min h-min px-4 py-2 bg-red text-white rounded-full hover:bg-red-700 m-2"
                   >
                     Delete
                   </button>
-                  <HiX onClick={() => setSelectedImage(null)} className='absolute text-red text-xl font-bold right-2 top-2 cursor-pointer'/>
+                  <HiX onClick={() => setSelectedImage(null)} className='absolute text-red text-xl font-bold right-2 top-2 cursor-pointer rounded-full bg-white'/>
                 </div>
               </motion.div>
             </div>
