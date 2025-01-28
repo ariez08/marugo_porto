@@ -6,7 +6,7 @@
 
 @font-face {
   font-family: 'Magnifico';
-  src: url('src\\assets\\fonts\\Magnifico Daytime ITC Std Regular.otf') format('opentype'); /* Adjust path */
+  src: url('/fonts/Magnifico-Daytime-ITC-Std-Regular.otf') format('opentype'); /* Adjust path */
   font-weight: normal;
   font-style: normal;
 }

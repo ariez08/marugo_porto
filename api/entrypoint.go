@@ -48,7 +48,7 @@ func init() {
 	// Fetch DATABASE_URL from environment variables
 	databaseUrl := os.Getenv("DATABASE_URL")
 	if databaseUrl == "" {
-		log.Fatalf("Missing database url variable: %v", databaseUrl)
+		log.Fatalf("Missing database url variable: -> %v <- there", databaseUrl)
 	}
 	poolConfig, err := pgxpool.ParseConfig(databaseUrl)
     if err != nil {
