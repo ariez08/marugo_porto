@@ -46,9 +46,9 @@ func init() {
 	myRouter(r)
 
 	// Fetch DATABASE_URL from environment variables
-	databaseUrl := os.Getenv("DB_URL")
+	databaseUrl := os.Getenv("DATABASE_URL")
 	if databaseUrl == "" {
-		log.Fatalf("Missing database url variable")
+		log.Fatalf("Missing database url variable: %v", databaseUrl)
 	}
 	poolConfig, err := pgxpool.ParseConfig(databaseUrl)
     if err != nil {
