@@ -46,11 +46,11 @@ func init() {
 	myRouter(r)
 
 	// Fetch DATABASE_URL from environment variables
-	databaseUrl := os.Getenv("DATABASE_URL")
+	databaseUrl := os.Getenv("DB_URL")
 	if databaseUrl == "" {
 		log.Fatalf("Missing database url variable")
 	}
-	poolConfig, err := pgxpool.ParseConfig(os.Getenv("DATABASE_URL"))
+	poolConfig, err := pgxpool.ParseConfig(databaseUrl)
     if err != nil {
         log.Fatalf("Error parsing database config: %v", err)
     }
