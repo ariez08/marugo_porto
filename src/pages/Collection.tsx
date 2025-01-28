@@ -111,7 +111,7 @@ const Collection = () => {
                   onClick={() => handleImageClick(image)}
                 >
                   <motion.img
-                    src={image.image}
+                    src={image.url}
                     alt={image.name}
                     className="w-full h-full rounded shadow object-cover bg-white"
                     whileHover={{ scale: 1.1 }}
@@ -146,7 +146,7 @@ const Collection = () => {
                 transition={{ duration: 0.3, ease: "easeOut" }}
               >
                 <img
-                  src={selectedImage.image}
+                  src={selectedImage.url}
                   alt={selectedImage.name}
                   className="md:max-w-3xl ssm:max-w-[80vw] md:max-h-[90vh] ssm:max-h-[50vh] object-contain rounded-lg border-2 border-gray-300 bg-gradient-to-r from-purple-100 to-purple-200"
                 />
@@ -176,7 +176,10 @@ const Collection = () => {
             <div className="bg-white p-6 rounded shadow-lg w-96">
               <ImageUploadForm />
               <button 
-                onClick={() => setShowUploadForm(false)} 
+                onClick={() => {
+                  setShowUploadForm(false)
+                  handleShowImages()
+                }} 
                 className="mt-4 px-4 py-2 bg-red text-white rounded"
               >
                 Close
