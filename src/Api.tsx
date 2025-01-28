@@ -7,7 +7,7 @@ export interface ImageData {
   id: number;
   name: string;
   description: string;
-  image: string; // URL Base64
+  url: string;
 }
 
 export interface Category {
@@ -52,7 +52,7 @@ export const createUser = async (user: User): Promise<{ message: string }> => {
 
 export const uploadImage = async (formData: FormData): Promise<{ message: string }> => {
     try {
-      const response = await axios.post(`${BASE_URL}/upload`, formData, {
+      const response = await axios.post(`${BASE_URL}/imgupl`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       return response.data;
@@ -78,7 +78,7 @@ export const uploadImage = async (formData: FormData): Promise<{ message: string
 
   export const deleteImageById = async (id: number): Promise<void> => {
     try {
-      await axios.delete(`${BASE_URL}/images/${id}`);
+      await axios.delete(`${BASE_URL}/imgdel/${id}`);
     } catch (error: any) {
       throw new Error(error.response?.data?.message || "Failed to delete image");
     }
