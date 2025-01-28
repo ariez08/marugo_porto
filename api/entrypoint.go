@@ -46,25 +46,26 @@ func init() {
 	myRouter(r)
 
 	// Fetch DATABASE_URL from environment variables
-	db_config, err := pgxpool.ParseConfig(os.Getenv("DATABASE_URL"))
-	if err != nil {
-		log.Fatal("Error parsing database URL:", err)
-	}
-	// Customize pool settings (optional)
-	db_config.MaxConns = 20                 // Maximum number of connections
-	db_config.MinConns = 5                  // Minimum number of idle connections
-	db_config.HealthCheckPeriod = 1 * time.Minute
-
-	// Create connection pool
-	db, err := pgxpool.ConnectConfig(context.Background(), db_config)
-	if err != nil {
-		log.Fatal("Error connecting to database:", err)
-	}
-	defer db.Close()
-
-	err = db.Ping(context.Background())
+	poolConfig, err := pgxpool.ParseConfig(os.Getenv("DATABASE_URL"))
     if err != nil {
-        log.Fatal("Database ping failed:", err)
+        log.Fatalf("Error parsing database config: %v", err)
+    }
+
+    // Configure pool settings
+    poolConfig.MaxConns = 25
+    poolConfig.MinConns = 5
+
+    // Assign to GLOBAL variable (use =, not :=)
+    db, err = pgxpool.ConnectConfig(context.Background(), poolConfig)
+    if err != nil {
+        log.Fatalf("Unable to connect to database: %v", err)
+    }
+    defer db.Close()
+
+    // Verify connection
+    err = db.Ping(context.Background())
+    if err != nil {
+        log.Fatalf("Database ping failed: %v", err)
     }
 
 	// Load environment variables
@@ -152,7 +153,7 @@ func uploadImage(c *gin.Context) {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
         return
     }
-    defer tx.Rollback(context.Background()) // Safety rollback jika ada error
+    defer tx.Rollback(context.Background())
 
     // Proses upload file
     file, header, _ := c.Request.FormFile("image")
@@ -186,7 +187,7 @@ func uploadImage(c *gin.Context) {
 
     // Upload ke S3
     _, err = s3Client.PutObject(context.TODO(), &s3.PutObjectInput{
-        Bucket: aws.String("myport-crunchy-personal"),
+        Bucket: aws.String(os.Getenv("S3_BUCKET")),
         Key:    aws.String(objectKey),
         Body:   file,
 		ContentType: aws.String(header.Header.Get("Content-Type")),
