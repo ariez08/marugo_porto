@@ -561,7 +561,7 @@ func addCategory(c *gin.Context) {
 
 func myRouter(r *gin.RouterGroup) {
 	// Routes
-	r.GET("/ping", ping)
+	r.GET("/pingthefuckoutofme", ping)
 
 	// Images
 	r.POST("/login", loginUser)
