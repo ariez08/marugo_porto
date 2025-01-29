@@ -130,7 +130,12 @@ const Footer: React.FC = () => {
               {(showRegister) ?
               <RegisterForm/>:<LoginForm/>}
               <div className='bg-red'>
-                
+                <button
+                  onClick={() => setResgister(true)}
+                >reg</button>
+                <button
+                  onClick={() => setResgister(false)}
+                >log</button>
               </div>
             </div>
           </div>
