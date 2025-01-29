@@ -100,9 +100,13 @@ func init() {
 // Ping route for health checks
 func ping(c *gin.Context) {
 	var test string = os.Getenv("AWS_REGION")
+	var test1 string = os.Getenv("AWS_ACCESS_KEY_ID")
+	var test2 string = os.Getenv("AWS_REGION")
 	c.JSON(http.StatusOK, gin.H{
 		"message": "pong",
 		"aws_region": test,
+		"satu": test1,
+		"dua": test2,
 	})
 }
 
