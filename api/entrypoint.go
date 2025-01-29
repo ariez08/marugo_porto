@@ -118,6 +118,8 @@ func loginUser(c *gin.Context) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 			return
 		}
+		log.Fatalf("DB error msg: %v", err)
+		fmt.Printf("DB error msg: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
 	}
