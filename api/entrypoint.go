@@ -220,7 +220,7 @@ func uploadImage(c *gin.Context) {
 
     // Upload ke S3
     _, err = s3Client.PutObject(context.TODO(), &s3.PutObjectInput{
-        Bucket: aws.String(os.Getenv("S3_BUCKET")),
+        Bucket: aws.String("myport-crunchy-personal"),
         Key:    aws.String(objectKey),
         Body:   file,
 		ContentType: aws.String(header.Header.Get("Content-Type")),
@@ -266,7 +266,7 @@ func getOneImage(c *gin.Context) {
 	// Generate pre-signed URL
 	presignClient := s3.NewPresignClient(s3Client)
 	presignedUrl, err := presignClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
-		Bucket: aws.String(os.Getenv("S3_BUCKET")),
+		Bucket: aws.String("myport-crunchy-personal"),
 		Key:    aws.String(image.S3Key),
 	}, s3.WithPresignExpires(15*time.Minute))
 	
@@ -314,7 +314,7 @@ func getAllImages(c *gin.Context) {
 
 		presignClient := s3.NewPresignClient(s3Client)
 		presignedUrl, err := presignClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
-			Bucket: aws.String(os.Getenv("S3_BUCKET")),
+			Bucket: aws.String("myport-crunchy-personal"),
 			Key:    aws.String(s3Key),
 		}, s3.WithPresignExpires(15*time.Minute))
 
@@ -378,7 +378,7 @@ func deleteImage(c *gin.Context) {
 
     // Hapus dari S3
     _, err = s3Client.DeleteObject(context.TODO(), &s3.DeleteObjectInput{
-        Bucket: aws.String(os.Getenv("S3_BUCKET")),
+        Bucket: aws.String("myport-crunchy-personal"),
         Key:    aws.String(s3Key),
     })
     if err != nil {
