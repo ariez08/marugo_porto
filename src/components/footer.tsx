@@ -4,12 +4,14 @@ import { BsInstagram, BsTiktok } from "react-icons/bs";
 import { motion } from "framer-motion";
 import FooterPic from "../assets/icon_footer.png";
 import KeyPic from "../assets/cookie.png";
-import LoginForm from './login_form'; 
+import LoginForm from './login_form';
+import RegisterForm from './register_form';
 
 const Footer: React.FC = () => {
   const colors = ['bg-yellow-200', 'bg-lime-green', 'bg-pink', 'bg-orange'];
   const [bgColor, setBgColor] = useState<string[]>(['bg-transparent', 'bg-transparent']);
   const [showPopup, setShowPopup] = useState(false);
+  const [showRegister, setResgister] = useState(false);
   const footerPicRef = useRef<HTMLDivElement>(null);
 
   const getRandomColor = (currentColor: string) => {
@@ -121,10 +123,16 @@ const Footer: React.FC = () => {
 
       {showPopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="absolute bg-white p-6 rounded-xl shadow-lg">
+          <div className="relative bg-white p-6 rounded-xl shadow-lg">
             <h2 className="text-xl font-bold mb-2 text-center underline underline-offset-4 decoration-wavy">You Found The Secret! 😭</h2>
-            <HiX onClick={() => setShowPopup(false)} className='absolute text-red text-xl font-bold right-2 top-2 cursor-pointer'/>
-            <LoginForm/>
+            <div className='flex'>
+              <HiX onClick={() => setShowPopup(false)} className='absolute text-red text-xl font-bold right-2 top-2 cursor-pointer'/>
+              {(showRegister) ?
+              <RegisterForm/>:<LoginForm/>}
+              <div className='bg-red'>
+                
+              </div>
+            </div>
           </div>
         </div>
       )}

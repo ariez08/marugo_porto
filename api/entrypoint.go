@@ -92,7 +92,11 @@ func init() {
 
 // Ping route for health checks
 func ping(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "pong"})
+	var test string = os.Getenv("AWS_REGION")
+	c.JSON(http.StatusOK, gin.H{
+		"message": "pong",
+		"aws_region": test,
+	})
 }
 
 // User login function
@@ -110,16 +114,24 @@ func loginUser(c *gin.Context) {
 	var hashedPassword string
 	err := db.QueryRow(context.Background(), "SELECT password FROM users WHERE username = $1", input.Username).Scan(&hashedPassword)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(input.Password))
+	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 		return
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(input.Password)); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Login successful", "username": input.Username})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Login successful",
+		"username": input.Username,
+	})
 }
 
 // Create a new user
@@ -135,19 +147,23 @@ func createUser(c *gin.Context) {
 		return
 	}
 
+	// Hash the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
 		return
 	}
 
-	_, err = db.Exec(context.Background(), "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)", input.Username, input.Email, hashedPassword)
+	// Insert the user into the database
+	_, err = db.Exec(context.Background(), "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)", input.Username, input.Email, string(hashedPassword))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "User created successfully"})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "User created successfully",
+	})
 }
 
 func uploadImage(c *gin.Context) {
