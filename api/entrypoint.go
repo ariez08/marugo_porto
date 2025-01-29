@@ -39,12 +39,12 @@ func isValidImageType(mimeType string) bool {
 	return allowedTypes[mimeType]
 }
 
-func CloseDB() {
-    if db != nil {
-        db.Close()
-        fmt.Println("Database connection closed")
-    }
-}
+// func CloseDB() {
+//     if db != nil {
+//         db.Close()
+//         fmt.Println("Database connection closed")
+//     }
+// }
 
 
 func init() {
@@ -575,6 +575,6 @@ func myRouter(r *gin.RouterGroup) {
 
 // Serve as a Vercel function
 func Handler(w http.ResponseWriter, r *http.Request) {
-	defer CloseDB()
+	// defer CloseDB()
 	app.ServeHTTP(w, r)
 }
