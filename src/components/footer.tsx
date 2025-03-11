@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import ToggleSwitch from './logreg_switch';
 import { HiX } from "react-icons/hi";
 import { BsInstagram, BsTiktok } from "react-icons/bs";
 import { motion } from "framer-motion";
@@ -11,8 +12,12 @@ const Footer: React.FC = () => {
   const colors = ['bg-yellow-200', 'bg-lime-green', 'bg-pink', 'bg-orange'];
   const [bgColor, setBgColor] = useState<string[]>(['bg-transparent', 'bg-transparent']);
   const [showPopup, setShowPopup] = useState(false);
-  const [showRegister, setResgister] = useState(false);
+  const [showRegister, setResgister] = useState(true);
   const footerPicRef = useRef<HTMLDivElement>(null);
+
+  const handleToggle = () => {
+    setResgister((prev) => !prev);
+  };
 
   const getRandomColor = (currentColor: string) => {
     let randomColor;
@@ -37,27 +42,6 @@ const Footer: React.FC = () => {
 
     if (info && info.point) {
       const { x, y } = info.point;
-
-      // // DEBUG
-      // const debugOverlay = document.createElement("div");
-      // debugOverlay.style.position = "absolute";
-      // debugOverlay.style.border = "2px dashed red";
-      // debugOverlay.style.top = `${footerPicRect.top + window.scrollY}px`;
-      // debugOverlay.style.left = `${footerPicRect.left + window.scrollX}px`;
-      // debugOverlay.style.width = `${footerPicRect.width}px`;
-      // debugOverlay.style.height = `${footerPicRect.height}px`;
-      // debugOverlay.style.pointerEvents = "none";
-      // debugOverlay.style.zIndex = "9999";
-      // document.body.appendChild(debugOverlay);
-      // setTimeout(() => debugOverlay.remove(), 2000);
-
-      // console.log('Adjusted KeyPic Location:', {
-      //   top: footerPicRect.top + window.scrollY,
-      //   left: footerPicRect.left + window.scrollX,
-      //   bottom: footerPicRect.bottom + window.scrollY,
-      //   right: footerPicRect.right + window.scrollX,
-      // });
-      // console.log('Drop Location:', { x, y });
 
       if (
         x >= footerPicRect.left + window.scrollX &&
@@ -125,18 +109,11 @@ const Footer: React.FC = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="relative bg-white p-6 rounded-xl shadow-lg">
             <h2 className="text-xl font-bold mb-2 text-center underline underline-offset-4 decoration-wavy">You Found The Secret! 😭</h2>
-            <div className='flex'>
+            <div className='flex gap-2'>
               <HiX onClick={() => setShowPopup(false)} className='absolute text-red text-xl font-bold right-2 top-2 cursor-pointer'/>
               {(showRegister) ?
               <RegisterForm/>:<LoginForm/>}
-              <div className='bg-red'>
-                <button
-                  onClick={() => setResgister(true)}
-                >reg</button>
-                <button
-                  onClick={() => setResgister(false)}
-                >log</button>
-              </div>
+              <ToggleSwitch isActive={showRegister} onToggle={handleToggle} />
             </div>
           </div>
         </div>

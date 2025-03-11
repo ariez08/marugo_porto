@@ -16,6 +16,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jackc/pgx/v4"
+	"github.com/joho/godotenv"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -48,6 +49,10 @@ func isValidImageType(mimeType string) bool {
 
 
 func init() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 	gin.SetMode(gin.ReleaseMode)
 	app = gin.New()
 	r := app.Group("/api")
