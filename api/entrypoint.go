@@ -16,7 +16,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jackc/pgx/v4"
-	"github.com/joho/godotenv"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -49,17 +48,14 @@ func isValidImageType(mimeType string) bool {
 
 
 func init() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
 	gin.SetMode(gin.ReleaseMode)
 	app = gin.New()
 	r := app.Group("/api")
 	myRouter(r)
 
 	// Fetch DATABASE_URL from environment variables
-	databaseUrl := os.Getenv("DATABASE_URL")
+	databaseUrl := os.Getenv("STORAGE_DATABASE_URL")
+
 	if databaseUrl == "" {
 		log.Fatalf("Missing database url variable: -> %v <- there", databaseUrl)
 	}
@@ -87,10 +83,10 @@ func init() {
 	// Load environment variables
 	var aws_err error
 	awsConfig, aws_err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion(os.Getenv("AWS_REGION")),
+		config.WithRegion(os.Getenv("DIMAS_AWS_REGION")),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
-			os.Getenv("AWS_ACCESS_KEY_ID"),
-			os.Getenv("AWS_SECRET_ACCESS_KEY"),
+			os.Getenv("DIMAS_AWS_ACCESS_KEY_ID"),
+			os.Getenv("DIMAS_AWS_SECRET_ACCESS_KEY"),
 			"",
 		)),
 	)
@@ -104,9 +100,9 @@ func init() {
 
 // Ping route for health checks
 func ping(c *gin.Context) {
-	var test string = os.Getenv("AWS_REGION")
-	var test1 string = os.Getenv("AWS_ACCESS_KEY_ID")
-	var test2 string = os.Getenv("S3_BUCKET")
+	var test string = os.Getenv("DIMAS_AWS_REGION")
+	var test1 string = os.Getenv("DIMAS_AWS_ACCESS_KEY_ID")
+	var test2 string = os.Getenv("DIMAS_S3_BUCKET")
 	c.JSON(http.StatusOK, gin.H{
 		"message": "pong",
 		"aws_region": test,
