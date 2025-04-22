@@ -12,7 +12,7 @@ const Footer: React.FC = () => {
   const colors = ['bg-yellow-200', 'bg-lime-green', 'bg-pink', 'bg-orange'];
   const [bgColor, setBgColor] = useState<string[]>(['bg-transparent', 'bg-transparent']);
   const [showPopup, setShowPopup] = useState(false);
-  const [showRegister, setResgister] = useState(true);
+  const [showRegister, setResgister] = useState(false);
   const footerPicRef = useRef<HTMLDivElement>(null);
 
   const handleToggle = () => {

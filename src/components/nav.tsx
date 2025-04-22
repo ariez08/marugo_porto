@@ -15,7 +15,7 @@ const Nav = ({text}: {text: string}) => {
   const handleLogout = () => {
     localStorage.setItem("isLoggingOut", "true");
     logout();
-    navigate("/home");
+    navigate("/");
     console.log("Logging out")
   };
 

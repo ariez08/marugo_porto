@@ -15,9 +15,10 @@ const ToggleSwitch = ({ isActive, onToggle }: ToggleSwitchProps) => {
           onClick={() => onToggle()}
           className={`w-full px-4 py-1 rounded-full font-medium transition-colors ${
             isActive
-              ? 'bg-green text-white'
-              : 'bg-yellow-200 text-gray hover:bg-yellow-100'
+              ? 'bg-gray text-gray-200 hover:bg-yellow-100 hover:text-green hover:border hover:border-green'
+              : 'bg-green text-white'
           }`}
+          disabled={!isActive}
         >
           Login
         </motion.button>
@@ -27,9 +28,10 @@ const ToggleSwitch = ({ isActive, onToggle }: ToggleSwitchProps) => {
           onClick={() => onToggle()}
           className={`w-full px-4 py-1 rounded-full font-medium transition-colors ${
             !isActive
-              ? 'bg-green text-white'
-              : 'bg-yellow-200 text-gray hover:bg-yellow-100'
+              ? 'bg-gray text-gray-200 hover:bg-yellow-100 hover:text-green hover:border hover:border-green'
+              : 'bg-green text-white'
           }`} 
+          disabled={isActive}
         >
           Register
         </motion.button>
