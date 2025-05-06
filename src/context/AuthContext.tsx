@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { logoutUser, getCurrentUser} from "../Api";
 
 interface AuthContextProps {
   isAuthenticated: boolean;
@@ -14,35 +15,48 @@ interface AuthProviderProps {
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    // Retrieve authentication state from localStorage
-    return localStorage.getItem("isAuthenticated") === "true";
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<string | null>(null);
 
-  const [user, setUser] = useState<string | null>(() => {
-    // Retrieve the user from localStorage
-    return localStorage.getItem("user");
-  });
-
+  // Simulasi login, bisa digunakan setelah loginUser dipanggil
   const login = (username: string) => {
     setIsAuthenticated(true);
     setUser(username);
-    // Save to localStorage
-    localStorage.setItem("isAuthenticated", "true");
-    localStorage.setItem("user", username);
   };
 
-  const logout = () => {
-    setIsAuthenticated(false);
-    setUser(null);
-    // Remove from localStorage
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("user");
+  const logout = async () => {
+    try {
+      const response = await logoutUser();
+      setIsAuthenticated(false);
+      setUser(null);
+      console.log(response.message); // Tampilkan pesan logout jika perlu
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
   };
 
+  // Cek login status dari server saat pertama kali app dijalankan
   useEffect(() => {
-    console.log("Auth state updated:", { isAuthenticated, user });
-  }, [isAuthenticated, user]);
+    const checkAuth = async () => {
+      try {
+        const user = await getCurrentUser();
+        setIsAuthenticated(true);
+        setUser(user.username);
+      } catch (err) {
+        setIsAuthenticated(false);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    checkAuth();
+  }, []);
+
+  if (loading) {
+    return <div></div>; // Atau spinner
+  }
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>

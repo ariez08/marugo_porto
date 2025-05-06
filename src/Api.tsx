@@ -1,7 +1,8 @@
 import axios from "axios";
+axios.defaults.withCredentials = true;
 
-const BASE_URL = "https://marugo-porto.vercel.app/api";
-// const BASE_URL = "http://localhost:8080"
+// const BASE_URL = "https://marugo-porto.vercel.app/api";
+const BASE_URL = "http://localhost:8080"
 // const BASE_URL = "http://localhost:3000/api"
 
 export interface ImageData {
@@ -22,12 +23,19 @@ interface User {
   password: string;
 }
 
-export const loginUser = async (user: Pick<User, "username" | "password">): Promise<{ message: string; username: string }> => {
+export const loginUser = async (
+  user: Pick<User, "username" | "password">
+): Promise<{ message: string }> => {
   try {
-    const response = await axios.post(`${BASE_URL}/login`, {
-      username: user.username,
-      password: user.password,
-    });
+    const response = await axios.post(
+      `${BASE_URL}/login`,
+      {
+        username: user.username,
+        password: user.password,
+      },
+      { withCredentials: true } // penting!
+    );
+
     return response.data;
   } catch (error: any) {
     if (error.response) {
@@ -37,6 +45,7 @@ export const loginUser = async (user: Pick<User, "username" | "password">): Prom
     }
   }
 };
+
 
 export const createUser = async (user: User): Promise<{ message: string }> => {
   try {
@@ -51,6 +60,15 @@ export const createUser = async (user: User): Promise<{ message: string }> => {
   }
 };
 
+export const getCurrentUser = async (): Promise<{ username: string }> => {
+  try {
+    const res = await axios.get(`${BASE_URL}/me`, { withCredentials: true });
+    return res.data;
+  } catch (err: any) {
+    throw new Error(err.response?.data?.error || "Not authenticated");
+  }
+};
+
 export const uploadImage = async (formData: FormData): Promise<{ message: string }> => {
     try {
       const response = await axios.post(`${BASE_URL}/imgupl`, formData, {
@@ -62,29 +80,45 @@ export const uploadImage = async (formData: FormData): Promise<{ message: string
       throw error;
     }
   };
+
+export const logoutUser = async (): Promise<{ message: string }> => {
+  try {
+    const response = await axios.post(`${BASE_URL}/logout`, {}, {
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || "Failed to logout"
+    );
+  }
+};
   
-  export const fetchAllImages = async (): Promise<ImageData[]> => {
-    try {
-      const response = await axios.get<ImageData[]>(`${BASE_URL}/images`, {withCredentials: true}); 
-      console.log("Images fetched successfully:", response.data);
-      
-      return response.data; 
-    } catch (error: any) {
-      console.error("Error fetching images:", error.response || error.message);
-      throw new Error(
-        error.response?.data?.message || "Failed to fetch images"
-      );
-    }
-  };
+export const fetchAllImages = async (): Promise<ImageData[]> => {
+  try {
+    const response = await axios.get<ImageData[]>(`${BASE_URL}/images`, {
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch images"
+    );
+  }
+};
 
-  export const deleteImageById = async (id: number): Promise<void> => {
-    try {
-      await axios.delete(`${BASE_URL}/imgdel/${id}`);
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Failed to delete image");
-    }
-  };
-
+export const deleteImageById = async (id: number): Promise<void> => {
+  try {
+    await axios.delete(`${BASE_URL}/imgdel/${id}`, {
+      withCredentials: true,
+    });
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || "Failed to delete image"
+    );
+  }
+};
+  
 export const fetchCategories = async () => {
   try {
     const response = await axios.get<Category[]>(`${BASE_URL}/categories`);
@@ -94,4 +128,5 @@ export const fetchCategories = async () => {
     throw error;
   }
 };
+
   

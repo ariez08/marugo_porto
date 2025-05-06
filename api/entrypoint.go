@@ -23,11 +23,22 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/google/uuid"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
-var db *pgxpool.Pool
-var app *gin.Engine
-var s3Client *s3.Client
+var (
+	app 		*gin.Engine
+	db        	*pgxpool.Pool
+	s3Client  	*s3.Client
+	accessTokenKey = []byte(os.Getenv("DIMAS_JWT_ACCESS_TOKEN"))
+	refreshTokenKey = []byte(os.Getenv("DIMAS_JWT_REFRESH_TOKEN"))
+)
+
+type Claims struct {
+    Username string `json:"username"`
+    jwt.RegisteredClaims
+}
 
 // Helper functions
 func isValidImageType(mimeType string) bool {
@@ -37,6 +48,51 @@ func isValidImageType(mimeType string) bool {
 		"image/webp": true,
 	}
 	return allowedTypes[mimeType]
+}
+
+func isValidUser(username, password string) bool {
+    var storedHash string
+    err := db.QueryRow(context.Background(), "SELECT password FROM users WHERE username = $1", username).Scan(&storedHash)
+    if err != nil {
+        return false
+    }
+
+    // Misalnya kamu simpan password pakai bcrypt:
+    return bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(password)) == nil
+}
+
+func GenerateAccessToken(username string) (string, error) {
+    expirationTime := time.Now().Add(30 * time.Minute)
+    claims := &Claims{
+        Username: username,
+        RegisteredClaims: jwt.RegisteredClaims{
+            ExpiresAt: jwt.NewNumericDate(expirationTime),
+        },
+    }
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+    return token.SignedString(accessTokenKey)
+}
+
+func GenerateRefreshToken(username string) (string, error) {
+    expirationTime := time.Now().Add(7 * 24 * time.Hour)
+    claims := &Claims{
+        Username: username,
+        RegisteredClaims: jwt.RegisteredClaims{
+            ExpiresAt: jwt.NewNumericDate(expirationTime),
+        },
+    }
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+    return token.SignedString(refreshTokenKey)
+}
+
+func MeHandler(c *gin.Context) {
+    user, exists := c.Get("user") // Ambil dari JWT middleware
+    if !exists {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"username": user})
 }
 
 // func CloseDB() {
@@ -112,72 +168,148 @@ func ping(c *gin.Context) {
 }
 
 // User login function
-func loginUser(c *gin.Context) {
-	var input struct {
+func LoginUserHandler(c *gin.Context) {
+    type LoginRequest struct {
+        Username string `json:"username" binding:"required"`
+        Password string `json:"password" binding:"required"`
+    }
+
+    var creds LoginRequest
+    if err := c.ShouldBindJSON(&creds); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+        return
+    }
+
+    if isValidUser(creds.Username, creds.Password) {
+        accessToken, _ := GenerateAccessToken(creds.Username)
+        refreshToken, _ := GenerateRefreshToken(creds.Username)
+
+        c.SetCookie("access_token", accessToken, 1800, "/", "", false, true)
+        c.SetCookie("refresh_token", refreshToken, 7*24*3600, "/refresh-token", "", false, true)
+
+        c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
+    } else {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+    }
+}
+
+// Create a new user
+func createUserHandler(c *gin.Context) {
+	var req struct {
 		Username string `json:"username" binding:"required"`
+        Email    string `json:"email" binding:"required,email"`
 		Password string `json:"password" binding:"required"`
 	}
 
-	if err := c.ShouldBindJSON(&input); err != nil {
+	// Parse dan validasi body
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	var hashedPassword string
-	err := db.QueryRow(context.Background(), "SELECT password FROM users WHERE username = $1", input.Username).Scan(&hashedPassword)
+	if len(req.Username) < 3 || len(req.Password) < 6 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Username/password terlalu pendek"})
+		return
+	}
+
+	// Cek apakah username sudah ada
+	var exists bool
+	err := db.QueryRow(context.Background(),
+		"SELECT EXISTS (SELECT 1 FROM users WHERE username = $1 or email = $2)",
+		req.Username, req.Email,
+	).Scan(&exists)
+
 	if err != nil {
-		if err == pgx.ErrNoRows {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
-			return
-		}
-		log.Fatalf("DB error msg: %v", err)
-		fmt.Printf("DB error msg: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(input.Password))
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
+	if exists {
+		c.JSON(http.StatusConflict, gin.H{"error": "Username atau Email sudah terdaftar"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Login successful",
-		"username": input.Username,
-	})
+	// Hash password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal hash password"})
+		return
+	}
+
+	// Simpan user ke database
+	_, err = db.Exec(context.Background(),
+		"INSERT INTO users (username, email, password) VALUES ($1, $2, $3)",
+		req.Username, req.Email, string(hashedPassword),
+	)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat akun"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "User berhasil dibuat"})
 }
 
-// Create a new user
-func createUser(c *gin.Context) {
-	var input struct {
-		Username string `json:"username" binding:"required"`
-		Email    string `json:"email" binding:"required,email"`
-		Password string `json:"password" binding:"required"`
-	}
+func AuthGinMiddleware() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        cookie, err := c.Request.Cookie("access_token")
+        if err != nil {
+            c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+            return
+        }
 
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
-		return
-	}
+        claims := &Claims{}
+        token, err := jwt.ParseWithClaims(cookie.Value, claims, func(token *jwt.Token) (interface{}, error) {
+            return accessTokenKey, nil
+        })
 
-	// Hash the password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
-		return
-	}
+        if err != nil || !token.Valid {
+            c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+            return
+        }
 
-	// Insert the user into the database
-	_, err = db.Exec(context.Background(), "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)", input.Username, input.Email, string(hashedPassword))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
-		return
-	}
+        // Simpan ke context Gin
+        c.Set("username", claims.Username)
+        c.Next()
+    }
+}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "User created successfully",
-	})
+func RefreshTokenHandlerGin(c *gin.Context) {
+    cookie, err := c.Request.Cookie("refresh_token")
+    if err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "No refresh token"})
+        return
+    }
+
+    claims := &Claims{}
+    token, err := jwt.ParseWithClaims(cookie.Value, claims, func(token *jwt.Token) (interface{}, error) {
+        return refreshTokenKey, nil
+    })
+
+    if err != nil || !token.Valid {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid refresh token"})
+        return
+    }
+
+    newAccessToken, _ := GenerateAccessToken(claims.Username)
+
+    http.SetCookie(c.Writer, &http.Cookie{
+        Name:     "access_token",
+        Value:    newAccessToken,
+        HttpOnly: true,
+        Path:     "/",
+        MaxAge:   1800,
+    })
+
+    c.JSON(http.StatusOK, gin.H{"message": "Access token refreshed"})
+}
+
+func LogoutHandlerGin(c *gin.Context) {
+    // Overwrite dengan expired cookies
+    c.SetCookie("access_token", "", -1, "/", "", true, true)
+    c.SetCookie("refresh_token", "", -1, "/refresh-token", "", true, true)
+
+    c.JSON(http.StatusOK, gin.H{"message": "Logout successful"})
 }
 
 func uploadImage(c *gin.Context) {
@@ -564,18 +696,29 @@ func myRouter(r *gin.RouterGroup) {
 	// Routes
 	r.GET("/pingthefuckoutofme", ping)
 
-	// Images
-	r.POST("/login", loginUser)
-	r.POST("/create", createUser)
-	r.POST("/imgupl", uploadImage)
-	r.GET("/images", getAllImages)
-	r.GET("/image/:id", getOneImage)
-	r.DELETE("/imgdel/:id", deleteImage)
-	r.PUT("/imgupd/:id", updateImage)
+	authRoutes := r.Use(AuthGinMiddleware()) 
+	{
+		authRoutes.GET("/me", func(c *gin.Context) {
+            username := c.MustGet("username").(string)
+            c.JSON(http.StatusOK, gin.H{"username": username})
+        })
 
-	// Route Categories
-	r.GET("/categories", getCategories)
-	r.POST("/categories", addCategory)
+		// Image Categories
+		r.GET("/categories", getCategories)
+		r.POST("/categories", addCategory)
+
+		// Images
+		r.POST("/imgupl", uploadImage)
+		r.GET("/images", getAllImages)
+		r.GET("/image/:id", getOneImage)
+		r.DELETE("/imgdel/:id", deleteImage)
+		r.PUT("/imgupd/:id", updateImage)
+	}
+
+	r.POST("/login", LoginUserHandler)
+	r.POST("/create", createUserHandler)
+	r.POST("/logout", LogoutHandlerGin)
+	
 }
 
 // Serve as a Vercel function

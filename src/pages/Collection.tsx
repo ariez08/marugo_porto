@@ -21,13 +21,7 @@ const Collection = () => {
   const { isAuthenticated } = useAuth();
 
   if (!isAuthenticated) {
-    const isLoggingOut = localStorage.getItem("isLoggingOut") === "true";
-    console.log("isLoggingOut", isLoggingOut)
-    if (localStorage.getItem("isLoggingOut") === "true") {
-      // localStorage.setItem("isAuthenticated", "false");
-      localStorage.removeItem("isLoggingOut"); // Clear the temporary flag
-      return <Navigate to="/" replace />;
-    }
+    console.log("Auth val: ",isAuthenticated)
     return <Navigate to="/im-not-supposed-here" replace />;
   }
 
