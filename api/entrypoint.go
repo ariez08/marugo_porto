@@ -106,6 +106,7 @@ func MeHandler(c *gin.Context) {
 func init() {
 	gin.SetMode(gin.ReleaseMode)
 	app = gin.New()
+    app.SetTrustedProxies([]string{"https://marugo-porto.vercel.app/api"})
 	r := app.Group("/api")
 	myRouter(r)
 
@@ -157,8 +158,8 @@ func init() {
 // Ping route for health checks
 func ping(c *gin.Context) {
 	var test string = os.Getenv("DIMAS_AWS_REGION")
-	var test1 string = os.Getenv("DIMAS_AWS_ACCESS_KEY_ID")
-	var test2 string = os.Getenv("DIMAS_S3_BUCKET")
+	var test1 string = os.Getenv("DIMAS_JWT_ACCESS_TOKEN")
+	var test2 string = os.Getenv("DIMAS_JWT_REFRESH_TOKEN")
 	c.JSON(http.StatusOK, gin.H{
 		"message": "pong",
 		"aws_region": test,
@@ -695,6 +696,9 @@ func addCategory(c *gin.Context) {
 func myRouter(r *gin.RouterGroup) {
 	// Routes
 	r.GET("/pingthefuckoutofme", ping)
+    r.POST("/login", LoginUserHandler)
+	r.POST("/create", createUserHandler)
+	r.POST("/logout", LogoutHandlerGin)
 
 	authRoutes := r.Use(AuthGinMiddleware()) 
 	{
@@ -714,10 +718,6 @@ func myRouter(r *gin.RouterGroup) {
 		r.DELETE("/imgdel/:id", deleteImage)
 		r.PUT("/imgupd/:id", updateImage)
 	}
-
-	r.POST("/login", LoginUserHandler)
-	r.POST("/create", createUserHandler)
-	r.POST("/logout", LogoutHandlerGin)
 	
 }
 
