@@ -28,7 +28,7 @@ const Main: React.FC = () => {
               buttonText="Portofolio" 
               buttonClass="bg-orange"
               delayTime={0.2}
-              buttonLink="/"
+              buttonLink="/no"
             />
             {/* arrow 1 */}
             <div className="hidden md:block w-48"><img src={ArrowIcon} alt="Arrow" className="object-none"/></div>

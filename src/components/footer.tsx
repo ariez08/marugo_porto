@@ -123,7 +123,7 @@ const Footer: React.FC = () => {
         <hr className="w-1/2 border-2 border-yellow-200 rounded-full" />
       </div>
       <div className="text-center text-md py-2">
-        <p className="font-bold text-white">Copyright &copy; 2024. All Rights Reserved.</p>
+        <p className="font-bold text-white">Copyright &copy; 2025. All Rights Reserved.</p>
       </div>
     </footer>
   );
