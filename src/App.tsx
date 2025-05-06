@@ -6,6 +6,7 @@ import Collection from "./pages/Collection";
 import Test from "./pages/Test";
 import Page404 from "./pages/Page404";
 import { AuthProvider } from "./context/AuthContext";
+import Portfolio from "./pages/Portfolio";
 
 const App: React.FC = () => {
   return (
@@ -14,6 +15,7 @@ const App: React.FC = () => {
         <Route path="/" element={<Main />} />
         <Route path="/home" element={<Main />} />
         <Route path="/about-me" element={<AboutMe />} />
+        <Route path="/portfolio" element={<Portfolio />} />
         <Route path="/collection" element={<Collection />} />
         <Route path="/upload" element={<Test />}></Route>
 

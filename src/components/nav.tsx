@@ -24,7 +24,7 @@ const Nav = ({text}: {text: string}) => {
   };
 
   return (
-      <div className="flex items-center justify-between md:p-3 ssm:p-2 gap-2 lg:flex-row text-white bg-blue">
+      <nav className="flex items-center justify-between md:p-3 ssm:p-2 gap-2 lg:flex-row text-white bg-blue">
         <div className="basis-1/4">
           <button onClick={toggleDropdown} className="px-4 text-3xl">
             {isOpen ? <AiOutlineClose /> : <HiMenuAlt2 />}
@@ -37,6 +37,9 @@ const Nav = ({text}: {text: string}) => {
             <ul className="p-2 text-blue text-lg">
               <li className="my-2 px-3 py-1 bg-white hover:bg-gray-100 cursor-pointer rounded">
                 <Link to="/" className="block w-full h-full">Home</Link>
+              </li>
+              <li className="my-2 px-3 py-1 bg-white hover:bg-gray-100 cursor-pointer rounded">
+                <Link to="/portfolio" className="block w-full h-full">Portfolio</Link>
               </li>
               <li className="my-2 px-3 py-1 bg-white hover:bg-gray-100 cursor-pointer rounded">
                 <Link to="/about-me" className="block w-full h-full">About Me</Link>
@@ -70,7 +73,7 @@ const Nav = ({text}: {text: string}) => {
             </div>
             : <h1></h1>}
         </div>
-      </div>
+      </nav>
   );
 };
 
