@@ -62,25 +62,25 @@ const Collection = () => {
     <div className="relative bg-pink flex flex-col min-h-screen">
       <Nav text="Collection & Upload"/>
 
-      <div className="flex-grow">
+      <div className="grow">
         <div className="m-4">
           <button 
               onClick={() => setShowUploadForm(true)} 
-              className="px-4 py-2 bg-blue text-white rounded"
+              className="px-4 py-2 bg-blue text-white rounded-sm"
             >
               Upload Image
           </button>
           <button 
             onClick={handleShowImages} 
             disabled={showImages}
-            className={`mx-1 px-4 rounded ${showImages ? 'bg-gray-200 cursor-not-allowed opacity-80 py-1' : 'bg-green text-white py-2'}`}
+            className={`mx-1 px-4 rounded-sm ${showImages ? 'bg-gray-200 cursor-not-allowed opacity-80 py-1' : 'bg-green text-white py-2'}`}
             >
             Show
           </button>
           <button 
             onClick={handleHideImages} 
             disabled={!showImages}
-            className={`mx-1 px-4 rounded ${!showImages ? 'bg-gray-200 cursor-not-allowed opacity-80 py-1' : 'bg-red text-white py-2'}`}
+            className={`mx-1 px-4 rounded-sm ${!showImages ? 'bg-gray-200 cursor-not-allowed opacity-80 py-1' : 'bg-red text-white py-2'}`}
             >
             Hide
           </button>
@@ -107,7 +107,7 @@ const Collection = () => {
                   <motion.img
                     src={image.url}
                     alt={image.name}
-                    className="w-full h-full rounded shadow object-cover bg-white"
+                    className="w-full h-full rounded-sm shadow-sm object-cover bg-white"
                     whileHover={{ scale: 1.1 }}
                   />
                   <div className="absolute top-1 right-1">
@@ -116,7 +116,7 @@ const Collection = () => {
                         e.stopPropagation(); // Prevent triggering the image click event
                         handleDelete(image.id);
                       }} 
-                      className="px-2 py-1 bg-red text-white text-xs rounded hover:opacity-80"
+                      className="px-2 py-1 bg-red text-white text-xs rounded-sm hover:opacity-80"
                     >
                       Delete
                     </button>
@@ -135,14 +135,14 @@ const Collection = () => {
           {selectedImage && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-60">
               <motion.div 
-                className="relative bg-pink rounded shadow-xl p-4 pr-8 md:max-w-5xl flex md:flex-row ssm:flex-col"
+                className="relative bg-pink rounded-sm shadow-xl p-4 pr-8 md:max-w-5xl flex md:flex-row ssm:flex-col"
                 layoutId={`image-${selectedImage.id}`} // Shared layout ID
                 transition={{ duration: 0.3, ease: "easeOut" }}
               >
                 <img
                   src={selectedImage.url}
                   alt={selectedImage.name}
-                  className="md:max-w-3xl ssm:max-w-[80vw] md:max-h-[90vh] ssm:max-h-[50vh] object-contain rounded-lg border-2 border-gray-300 bg-gradient-to-r from-purple-100 to-purple-200"
+                  className="md:max-w-3xl ssm:max-w-[80vw] md:max-h-[90vh] ssm:max-h-[50vh] object-contain rounded-lg border-2 border-gray-300 bg-linear-to-r from-purple-100 to-purple-200"
                 />
                 <div className="ml-4 ssm:m-3 flex flex-row md:flex-col justify-between">
                   <div className="p-2 bg-white rounded-xl">
@@ -167,14 +167,14 @@ const Collection = () => {
 
         {showUploadForm && (
           <div className="fixed inset-0 flex items-center justify-center bg-gray-300 bg-opacity-50">
-            <div className="bg-white p-6 rounded shadow-lg w-96">
+            <div className="bg-white p-6 rounded-sm shadow-lg w-96">
               <ImageUploadForm />
               <button 
                 onClick={() => {
                   setShowUploadForm(false)
                   handleShowImages()
                 }} 
-                className="mt-4 px-4 py-2 bg-red text-white rounded"
+                className="mt-4 px-4 py-2 bg-red text-white rounded-sm"
               >
                 Close
               </button>

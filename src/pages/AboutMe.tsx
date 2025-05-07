@@ -15,16 +15,16 @@ const AboutMe = () => {
     <div className="relative bg-pink flex flex-col min-h-screen">
       <Nav text="ABOUT - ME"/>
       <div>
-        <div className="relative flex m-8 flex-grow md:flex-row sm:flex-col ssm:flex-col">
+        <div className="relative flex m-8 md:flex-row sm:flex-col ssm:flex-col">
           {/* gambar profil */}
-          <div className="w-1/4 py-4 border-2 border-yellow-100 rounded-lg -z-60"><img src={Hero} alt="hero" className="object-contain place-self-center"/></div>
+          <div className="w-1/4 py-4 border-2 border-yellow-100 rounded-lg z-60"><img src={Hero} alt="hero" className="object-contain place-self-center"/></div>
           {/* deskripsi singkat */}
           <div className="w-3/4 flex flex-col ml-6 p-2 pt-4 text-white font-bold">
             <div className="flex">
               <SubTitle text="Hello" className="text-4xl"/>
               <h1 className="text-2xl h-min rounded-full pb-1">✨</h1>
             </div>
-            <p className="flex flex-grow mt-2 pr-4 p-2 text-2xl font-desc border-4 border-white rounded-xl">
+            <p className="flex grow mt-2 pr-4 p-2 text-2xl font-desc border-4 border-white rounded-xl">
               My name Keisha Surya Ardelia, but you can call me Marugo. It's a pleasure to meet you! 
               <br/><br/>I'm a freelance Illustrator and a Graphic Designer. I always excited to learn new things and explore creative possibilities in my field! I love doing illustration and fanart. 
               My portfolio will showcase a diverse range of projects that demonstrate my abilities as an illustrator and graphic designer, which may adapt my styles based on project requirements.

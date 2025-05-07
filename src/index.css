@@ -1,8 +1,108 @@
-@import url('https://fonts.googleapis.com/css2?family=Delius&family=Londrina+Shadow&family=Pacifico&family=Schoolbell&family=Sour+Gummy:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Delius&family=Londrina+Shadow&family=Pacifico&family=Schoolbell&family=Sour+Gummy:ital,wght@0,100..900;1,100..900&display=swap')
+layer(base);
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@theme {
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --color-black-100: #1c1c1c;
+  --color-black-200: #0d0d0d;
+  --color-black: #000000;
+
+  --color-white-300: #fff5e4;
+  --color-white: #ffffff;
+
+  --color-purple-100: #cb9df0;
+  --color-purple-200: #8967b3;
+  --color-purple: #b603fc;
+
+  --color-midnight: #121063;
+  --color-metal: #565584;
+  --color-tahiti: #3ab7bf;
+  --color-silver: #ecebff;
+  --color-bubble-gum: #ff77e9;
+  --color-bermuda: #78dcca;
+  --color-pink: #ff9bc2;
+  --color-blue: #64a0ad;
+
+  --color-gray-100: #f0f0f0;
+  --color-gray-200: #f1efef;
+  --color-gray-300: #b4b4b3;
+  --color-gray-400: #b7b7b7;
+  --color-gray-500: #9d9d9d;
+  --color-gray: #b4b4b3;
+
+  --color-yellow-100: #fbfbd5;
+  --color-yellow-200: #fedc70;
+
+  --color-orange: #ffa500;
+  --color-lime-green: #a1fc03;
+  --color-teal: #7ed7c1;
+
+  --color-green: #16c47f;
+
+  --color-red: #f93827;
+
+  --color-peach-100: #ffd1d1;
+  --color-peach-200: #ff9494;
+  --color-peach: #ffe3e1;
+
+  --animate-marquee: marquee 1s ease-in-out infinite;
+
+  --breakpoint-ssm: 375px;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+
+  --font-school: Schoolbell, sans-serif;
+  --font-londrina: Londrina Shadow, sans-serif;
+  --font-nav: Pacifico, sans-serif;
+  --font-desc: Delius, sans-serif;
+  --font-name: Sour Gummy, sans-serif;
+  --font-magnifico: Magnifico, sans-serif;
+
+  --tracking-extra: 0.25em;
+
+  --radius-custom: 1.5rem;
+  --radius-extra-large: 3rem;
+
+  @keyframes marquee {
+    0% {
+      transform: translateX(-10%);
+    }
+    50% {
+      transform: translateX(15%);
+    }
+    100% {
+      transform: translateX(-10%);
+    }
+  }
+}
+
+@utility container {
+  margin-inline: auto;
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
 
 @font-face {
   font-family: 'Magnifico';

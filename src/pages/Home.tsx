@@ -12,7 +12,7 @@ const Main: React.FC = () => {
     return (
       <div className="relative min-h-screen flex flex-col bg-pink">
         <Nav text="- H O M E -"/>
-        <div className="flex-grow">
+        <div className="grow">
           <div className="m-5 text-white">
             <div className="flex">
               <h1 className="font-londrina font-bold text-6xl">H e l l o</h1>

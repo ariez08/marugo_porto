@@ -69,7 +69,7 @@ const ImageUploadForm: React.FC = () => {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-xs"
           required
         />
       </div>
@@ -82,7 +82,7 @@ const ImageUploadForm: React.FC = () => {
           id="category"
           value={categoryID}
           onChange={(e) => setCategoryID(e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-xs"
           required
         >
           <option value="">Select image category</option>
@@ -102,7 +102,7 @@ const ImageUploadForm: React.FC = () => {
           id="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-xs"
         ></textarea>
       </div>
 
@@ -115,14 +115,14 @@ const ImageUploadForm: React.FC = () => {
           type="file"
           accept="image/png, image/jpeg"
           onChange={handleFileChange}
-          className="mt-1 block w-full text-sm text-gray file:mr-4 file:rounded file:border-0 file:bg-gray-100 file:py-2 file:px-4 file:text-sm file:font-medium file:text-gray-300 hover:file:bg-gray-200 file:cursor-pointer"
+          className="mt-1 block w-full text-sm text-gray file:mr-4 file:rounded-sm file:border-0 file:bg-gray-100 file:py-2 file:px-4 file:text-sm file:font-medium file:text-gray-300 hover:file:bg-gray-200 file:cursor-pointer"
           required
         />
       </div>
 
       <button
         type="submit"
-        className="w-full px-4 py-2 bg-blue text-black rounded-md focus:outline-none focus:ring-2"
+        className="w-full px-4 py-2 bg-blue text-black rounded-md focus:outline-hidden focus:ring-2"
       >
         Upload Image
       </button>

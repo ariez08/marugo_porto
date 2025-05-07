@@ -9,7 +9,7 @@ const FourOFour: React.FC = () => {
     return (
         <div className="relative bg-pink flex flex-col min-h-screen">
             <Nav text="Page Not Found"/>
-            <div className="relative flex-grow flex flex-col items-center justify-center">
+            <div className="relative grow flex flex-col items-center justify-center">
                 <div className="md:w-[10vw] ssm:w-[40vw] p-2">
                     <motion.img 
                         src={Emoji}

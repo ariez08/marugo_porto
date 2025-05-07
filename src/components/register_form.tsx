@@ -39,7 +39,7 @@ const RegisterForm: React.FC = () => {
             placeholder="Your username please"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="shadow border rounded w-full py-2 px-3 leading-tight"
+            className="shadow-sm border rounded-sm w-full py-2 px-3 leading-tight"
             required
           />
         </div>
@@ -54,7 +54,7 @@ const RegisterForm: React.FC = () => {
             placeholder="Your username please"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="shadow border rounded w-full py-2 px-3 leading-tight"
+            className="shadow-sm border rounded-sm w-full py-2 px-3 leading-tight"
             required
           />
         </div>
@@ -69,7 +69,7 @@ const RegisterForm: React.FC = () => {
             placeholder="Your password please"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="shadow border rounded w-full py-2 px-3 leading-tight"
+            className="shadow-sm border rounded-sm w-full py-2 px-3 leading-tight"
             required
           />
         </div>
@@ -77,7 +77,7 @@ const RegisterForm: React.FC = () => {
         <div className="place-self-end">
           <button
             type="submit"
-            className="bg-blue text-white py-1 px-4 rounded focus:outline-none focus:shadow-outline"
+            className="bg-blue text-white py-1 px-4 rounded-sm focus:outline-hidden focus:shadow-outline"
           >
             Create
           </button>

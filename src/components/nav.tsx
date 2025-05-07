@@ -31,26 +31,26 @@ const Nav = ({text}: {text: string}) => {
           </button>
           <div
             className={`absolute bg-white left-10 mt-2 w-48 rounded-md transition-all duration-300 ${
-              isOpen ? "opacity-100 translate-y-0 z-50" : "opacity-0 -translate-y-2 pointer-events-none z-50"
+              isOpen ? "opacity-100 translate-y-0 z-900" : "opacity-0 -translate-y-2 pointer-events-none z-50"
             }`}
           >
             <ul className="p-2 text-blue text-lg">
-              <li className="my-2 px-3 py-1 bg-white hover:bg-gray-100 cursor-pointer rounded">
+              <li className="my-2 px-3 py-1 bg-white hover:bg-gray-100 cursor-pointer rounded-sm">
                 <Link to="/" className="block w-full h-full">Home</Link>
               </li>
-              <li className="my-2 px-3 py-1 bg-white hover:bg-gray-100 cursor-pointer rounded">
+              <li className="my-2 px-3 py-1 bg-white hover:bg-gray-100 cursor-pointer rounded-sm">
                 <Link to="/portfolio" className="block w-full h-full">Portfolio</Link>
               </li>
-              <li className="my-2 px-3 py-1 bg-white hover:bg-gray-100 cursor-pointer rounded">
+              <li className="my-2 px-3 py-1 bg-white hover:bg-gray-100 cursor-pointer rounded-sm">
                 <Link to="/about-me" className="block w-full h-full">About Me</Link>
               </li>
               {isAuthenticated ? 
-              <li className="my-2 px-3 py-1 bg-white hover:bg-gray-100 cursor-pointer rounded">
+              <li className="my-2 px-3 py-1 bg-white hover:bg-gray-100 cursor-pointer rounded-sm">
                 <Link to="/collection" className="block w-full h-full">Show</Link>
               </li> : <div></div>}
               
               {(isAuthenticated && user) ? 
-              <li className="my-2 px-3 py-1 bg-red text-white hover:bg-opacity-85 cursor-pointer rounded" onClick={handleLogout}>
+              <li className="my-2 px-3 py-1 bg-red text-white hover:bg-opacity-85 cursor-pointer rounded-sm" onClick={handleLogout}>
                 <button>Log Out</button>
               </li> : <div></div>}
             </ul>
