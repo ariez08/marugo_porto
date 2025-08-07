@@ -1,8 +1,8 @@
 import axios from "axios";
 axios.defaults.withCredentials = true;
 
-// const BASE_URL = "https://marugo-porto.vercel.app/api";
-const BASE_URL = "http://localhost:90"
+const BASE_URL = "https://marugo-porto.vercel.app/api";
+// const BASE_URL = "http://localhost:90"
 // const BASE_URL = "http://localhost:3000/api"
 
 export interface ImageData {
