@@ -28,15 +28,24 @@ const Collection = () => {
 
   const handleShowImages = async () => {
     setLoading(true);
+    setError(null); // Reset galat sebelumnya
     try {
       const data = await fetchAllImages();
-      setImages(data);
+      // Validasi apakah data yang diterima adalah sebuah array
+      if (Array.isArray(data)) {
+        setImages(data);
+      } else {
+        // Jika bukan array, set state menjadi array kosong untuk mencegah galat
+        setImages([]);
+        console.error("Data yang diterima dari API bukan sebuah array:", data);
+        setError('Gagal memuat gambar: format data tidak valid.');
+      }
     } catch (err: any) {
-      setError(err.message || 'Failed to load images');
+      setImages([]); // Pastikan tetap array kosong jika terjadi galat
+      setError(err.message || 'Gagal memuat gambar');
     } finally {
       setLoading(false);
       setShowImages(true);
-      // console.log("Images fetched:", images);
     }
   };
 
