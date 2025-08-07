@@ -26,7 +26,7 @@ const Nav = ({text}: {text: string}) => {
   return (
       <nav className="flex items-center justify-between md:p-3 ssm:p-2 gap-2 lg:flex-row text-white bg-blue">
         <div className="basis-1/4">
-          <button onClick={toggleDropdown} className="px-4 text-3xl">
+          <button onClick={toggleDropdown} className="px-4 py-1 text-3xl cursor-pointer w-fit hover:bg-white/10 rounded-full">
             {isOpen ? <AiOutlineClose /> : <HiMenuAlt2 />}
           </button>
           <div

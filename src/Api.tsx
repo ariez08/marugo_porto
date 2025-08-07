@@ -1,15 +1,26 @@
 import axios from "axios";
 axios.defaults.withCredentials = true;
 
-const BASE_URL = "https://marugo-porto.vercel.app/api";
-// const BASE_URL = "http://localhost:8080"
+// const BASE_URL = "https://marugo-porto.vercel.app/api";
+const BASE_URL = "http://localhost:90"
 // const BASE_URL = "http://localhost:3000/api"
 
 export interface ImageData {
   id: number;
   name: string;
+  category: string;
   description: string;
   url: string;
+}
+
+export interface CarouselData {
+  id: number;
+  main_url: string;
+  left_url: string;
+  right_url: string;
+  category: string;
+  description: string;
+  alt_text: string;
 }
 
 export interface Category {
@@ -129,4 +140,15 @@ export const fetchCategories = async () => {
   }
 };
 
-  
+export const fetchCrouselItems = async (): Promise<CarouselData[]> => {
+  try {
+    const response = await axios.get<CarouselData[]>(`${BASE_URL}/carousel`, {
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch carousel items"
+    );
+  }
+}

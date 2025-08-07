@@ -10,6 +10,7 @@ import { fetchAllImages, ImageData, deleteImageById } from "../Api";
 import Nav from "../components/nav";
 import Footer from "../components/footer";
 import ImageUploadForm from "../components/image_form";
+import LoadingSpinner from "../components/loading";
 
 const Collection = () => {
   const [images, setImages] = useState<ImageData[]>([]);
@@ -35,6 +36,7 @@ const Collection = () => {
     } finally {
       setLoading(false);
       setShowImages(true);
+      // console.log("Images fetched:", images);
     }
   };
 
@@ -61,26 +63,25 @@ const Collection = () => {
   return (
     <div className="relative bg-pink flex flex-col min-h-screen">
       <Nav text="Collection & Upload"/>
-
       <div className="grow">
         <div className="m-4">
           <button 
               onClick={() => setShowUploadForm(true)} 
-              className="px-4 py-2 bg-blue text-white rounded-sm"
+              className="px-4 py-2 bg-blue text-white rounded-sm cursor-pointer"
             >
               Upload Image
           </button>
           <button 
             onClick={handleShowImages} 
             disabled={showImages}
-            className={`mx-1 px-4 rounded-sm ${showImages ? 'bg-gray-200 cursor-not-allowed opacity-80 py-1' : 'bg-green text-white py-2'}`}
+            className={`mx-1 px-4 rounded-sm ${showImages ? 'bg-gray-200 cursor-not-allowed opacity-80 py-1' : 'bg-green text-white py-2 cursor-pointer'}`}
             >
             Show
           </button>
           <button 
             onClick={handleHideImages} 
             disabled={!showImages}
-            className={`mx-1 px-4 rounded-sm ${!showImages ? 'bg-gray-200 cursor-not-allowed opacity-80 py-1' : 'bg-red text-white py-2'}`}
+            className={`mx-1 px-4 rounded-sm ${!showImages ? 'bg-gray-200 cursor-not-allowed opacity-80 py-1' : 'bg-red text-white py-2 cursor-pointer'}`}
             >
             Hide
           </button>
@@ -90,17 +91,17 @@ const Collection = () => {
 
         {showImages && (
           <div 
-            className="mx-4 p-4 overflow-y-scroll overflow-x-hidden h-[70vh] md:w-[75vw] grid lg:grid-cols-4 sm:grid-cols-3 ssm:grid-cols-2 gap-8 border-4 border-white rounded-lg" 
-            style={{ gridAutoRows: "70%" }}
+            className="mx-4 p-4 overflow-y-scroll overflow-x-hidden md:h-[60vh] md:w-[65vw] grid lg:grid-cols-4 sm:grid-cols-3 ssm:grid-cols-2 gap-8 border-4 border-white rounded-lg" 
+            style={{ gridAutoRows: "60%" }}
           >
             {loading ? (
-              <div>Loading...</div>
+              <div className="w-6 h-6"><LoadingSpinner/></div>
             ) : (
               images.map((image) => (
                 <motion.div 
                   id="imageCard" 
                   key={image.id} 
-                  className="group relative cursor-pointer" 
+                  className="relative cursor-pointer" 
                   layoutId={`image-${image.id}`} // Shared layout ID
                   onClick={() => handleImageClick(image)}
                 >
@@ -110,6 +111,7 @@ const Collection = () => {
                     className="w-full h-full rounded-sm shadow-sm object-cover bg-white"
                     whileHover={{ scale: 1.1 }}
                   />
+                  {/* <div className="absolute top-1 w-6 h-6 -z-1"><LoadingSpinner/></div> */}
                   <div className="absolute top-1 right-1">
                     <button 
                       onClick={(e) => {
@@ -121,7 +123,7 @@ const Collection = () => {
                       Delete
                     </button>
                   </div>
-                  <div className="bg-black-100 bg-opacity-50 rounded-full">
+                  <div className="bg-black-100/50 rounded-full">
                     <h3 className="text-center text-sm capitalize font-name text-white text-nowrap mt-1 font-medium">{image.name}</h3>
                   </div>
                   
@@ -133,28 +135,31 @@ const Collection = () => {
 
         <AnimatePresence>
           {selectedImage && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-60">
+            <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-60">
               <motion.div 
-                className="relative bg-pink rounded-sm shadow-xl p-4 pr-8 md:max-w-5xl flex md:flex-row ssm:flex-col"
+                className="relative bg-yellow-100 rounded-md shadow-2xl shadow-blue p-4 pr-8 md:max-w-5xl flex md:flex-row ssm:flex-col border-4 border-yellow-200"
                 layoutId={`image-${selectedImage.id}`} // Shared layout ID
                 transition={{ duration: 0.3, ease: "easeOut" }}
               >
                 <img
                   src={selectedImage.url}
                   alt={selectedImage.name}
-                  className="md:max-w-3xl ssm:max-w-[80vw] md:max-h-[90vh] ssm:max-h-[50vh] object-contain rounded-lg border-2 border-gray-300 bg-linear-to-r from-purple-100 to-purple-200"
+                  className="md:max-w-3xl ssm:max-w-[80vw] md:max-h-[90vh] ssm:max-h-[50vh] object-contain rounded-lg border-2 border-green bg-linear-to-r from-purple-100 to-purple-200"
                 />
                 <div className="ml-4 ssm:m-3 flex flex-row md:flex-col justify-between">
-                  <div className="p-2 bg-white rounded-xl">
-                    <h2 className="text-xl font-bold mb-1 ml-1 capitalize font-name">{selectedImage.name}</h2>
-                    <p className="px-2 py-1 text-sm bg-white-300 rounded-lg">{selectedImage.description}</p>
+                  <div className="m-2">
+                    <h2 className="m-1 px-1 rounded-md place-self-end font-bold font-name text-yellow-200 bg-green w-fit">{selectedImage.category}</h2>
+                    <div className="p-2 bg-white rounded-xl">
+                      <h2 className="text-xl font-bold mb-1 ml-1 capitalize font-name">{selectedImage.name}</h2>
+                      <p className="px-2 py-1 text-sm bg-white-300 rounded-lg">{selectedImage.description}</p>
+                    </div>
                   </div>
                   <button 
                     onClick={() => {
                       handleDelete(selectedImage.id);
                       setSelectedImage(null);
                     }} 
-                    className="w-min h-min px-4 py-2 bg-red text-white rounded-full hover:bg-red-700 m-2"
+                    className="w-min h-min px-4 py-2 bg-red text-white rounded-full hover:bg-red-700 m-2 cursor-pointer"
                   >
                     Delete
                   </button>
@@ -166,7 +171,7 @@ const Collection = () => {
         </AnimatePresence>
 
         {showUploadForm && (
-          <div className="fixed inset-0 flex items-center justify-center bg-gray-300 bg-opacity-50">
+          <div className="fixed inset-0 flex items-center justify-center bg-black/70">
             <div className="bg-white p-6 rounded-sm shadow-lg w-96">
               <ImageUploadForm />
               <button 

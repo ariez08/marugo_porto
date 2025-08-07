@@ -28,7 +28,7 @@ const LoginForm: React.FC = () => {
 
   return (
       <form 
-        className="flex flex-col bg-white shadow-lg border rounded-xl px-16 pt-4 pb-4" 
+        className="flex flex-col bg-white shadow-lg border rounded-xl px-16 pt-4 pb-4 z-50" 
         onSubmit={handleSubmit}
       >
         {error && <p className="text-red text-sm mb-4">{error}</p>}

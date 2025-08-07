@@ -106,7 +106,7 @@ const Footer: React.FC = () => {
       
 
       {showPopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className="relative bg-white p-6 rounded-xl shadow-lg">
             <h2 className="text-xl font-bold mb-2 text-center underline underline-offset-4 decoration-wavy">You Found The Secret! 😭</h2>
             <div className='flex gap-2'>
