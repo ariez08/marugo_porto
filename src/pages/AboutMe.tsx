@@ -35,7 +35,7 @@ const AboutMe = () => {
         <div className="mx-8 my-8 relative">
           <SubTitle text="Work Experience" className="text-3xl"/>
           <div className="flex lg:flex-row ssm:flex-col">
-            <div className="relative w-2/5 h-min my-2 border-2 border-white rounded-xl">
+            <div className="relative sm:w-5/5 md:w-2/5 h-min my-2 border-2 border-white rounded-xl">
               <WorkExpCard 
                 corp="Webtoon Lineartist • PT. Hive Kreasi Internasional"
                 date="1 Feb 2019 - 25 Jun 2019 | Jakarta Barat"
@@ -60,7 +60,7 @@ const AboutMe = () => {
               >
                 <li>Responsible for all visual work that the team needed including handling social media pos, merchandise, event ID card, and landing page.</li>
               </WorkExpCard>
-              <img src={CatPic1} alt="cat" className="absolute -right-5 -bottom-10 h-24" />
+              <img src={CatPic1} alt="cat" className="absolute -right-5 -bottom-10 h-24 sm:hidden" />
             </div>
             <div className="relative w-2/5 mx-4">
               <img src={CatWomanPic} alt="cat pic" className="absolute w-5/6 -top-24 left-10"/>
