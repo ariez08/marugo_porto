@@ -8,10 +8,10 @@ import { CarouselData, fetchCrouselItems } from '../Api';
 import LoadingSpinner from '../components/loading';
 
 import { Swiper, SwiperSlide } from 'swiper/react';
-import 'swiper/css';
-import 'swiper/css/effect-fade';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
+// import 'swiper/css';
+// import 'swiper/css/effect-fade';
+// import 'swiper/css/navigation';
+// import 'swiper/css/pagination';
 
 import { EffectFade, Navigation, Pagination, Autoplay} from 'swiper/modules';
 

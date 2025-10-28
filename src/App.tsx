@@ -7,6 +7,7 @@ import Test from "./pages/Test";
 import Page404 from "./pages/Page404";
 import { AuthProvider } from "./context/AuthContext";
 import Portfolio from "./pages/Portfolio";
+import Happy21 from "./pages/Happy21";
 
 const App: React.FC = () => {
   return (
@@ -18,7 +19,7 @@ const App: React.FC = () => {
         <Route path="/portfolio" element={<Portfolio />} />
         <Route path="/collection" element={<Collection />} />
         <Route path="/upload" element={<Test />}></Route>
-
+        <Route path="/hbd-keca-21" element={<Happy21/>}></Route>
         {/* Catch-All Route */}
         <Route path="*" element={<Page404 />} />
       </Routes>
