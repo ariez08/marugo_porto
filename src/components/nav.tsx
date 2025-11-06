@@ -39,16 +39,16 @@ const Nav = ({text}: {text: string}) => {
                 <Link to="/" className="block w-full h-full">Home</Link>
               </li>
               {/* -hbdkeca */}
-              <li className="my-2 px-3 py-1 bg-white hover:bg-gray-100 cursor-pointer rounded-sm">
+              {/* <li className="my-2 px-3 py-1 bg-white hover:bg-gray-100 cursor-pointer rounded-sm">
                 <Link to="/portfolio" className="block w-full h-full">Portfolio</Link>
-              </li>
+              </li> */}
               <li className="my-2 px-3 py-1 bg-white hover:bg-gray-100 cursor-pointer rounded-sm">
                 <Link to="/about-me" className="block w-full h-full">About Me</Link>
               </li>
-              {isAuthenticated ? 
+              {/* {isAuthenticated ? 
               <li className="my-2 px-3 py-1 bg-white hover:bg-gray-100 cursor-pointer rounded-sm">
                 <Link to="/collection" className="block w-full h-full">Show</Link>
-              </li> : <div></div>}
+              </li> : <div></div>} */}
               
               {(isAuthenticated && user) ? 
               <li className="my-2 px-3 py-1 bg-red text-white hover:bg-opacity-85 cursor-pointer rounded-sm" onClick={handleLogout}>
