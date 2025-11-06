@@ -38,9 +38,7 @@ const Nav = ({text}: {text: string}) => {
               <li className="my-2 px-3 py-1 bg-white hover:bg-gray-100 cursor-pointer rounded-sm">
                 <Link to="/" className="block w-full h-full">Home</Link>
               </li>
-              <li className="my-2 px-3 py-1 bg-white hover:bg-gray-100 cursor-pointer rounded-sm">
-                <Link to="/hbd-keca-21" className="block w-full h-full">HBD</Link>
-              </li>
+              {/* -hbdkeca */}
               <li className="my-2 px-3 py-1 bg-white hover:bg-gray-100 cursor-pointer rounded-sm">
                 <Link to="/portfolio" className="block w-full h-full">Portfolio</Link>
               </li>
