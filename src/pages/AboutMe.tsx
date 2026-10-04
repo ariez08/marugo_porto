@@ -5,7 +5,8 @@ import WorkExpCard from "../components/work_exp";
 import AboutCard from "../components/about_card";
 import CatWomanPic from "../assets/cat_woman.png";
 import CatPic1 from "../assets/corner_cat.png";
-import { TbBrandAdobePhotoshop, TbBrandAdobeIllustrator, TbPalette } from "react-icons/tb";
+import { FaPaintbrush, FaPalette } from "react-icons/fa6";
+import { IoColorPalette } from "react-icons/io5";
 import { motion } from "framer-motion";
 
 import Hero from "../assets/hero.png";
@@ -165,16 +166,16 @@ const AboutMe = () => {
 
           <AboutCard name="Software" delay={0.3}>
             <div className="flex items-center justify-around p-4 text-5xl">
-              <TbBrandAdobePhotoshop
-                title="Adobe Photoshop"
+              <FaPaintbrush
+                title="Digital Art"
                 className="hover:scale-115 transition-transform cursor-pointer"
               />
-              <TbBrandAdobeIllustrator
-                title="Adobe Illustrator"
+              <FaPalette
+                title="Color Design"
                 className="hover:scale-115 transition-transform cursor-pointer"
               />
-              <TbPalette
-                title="Digital Art & Canvas"
+              <IoColorPalette
+                title="Creative Tools"
                 className="hover:scale-115 transition-transform cursor-pointer"
               />
             </div>
