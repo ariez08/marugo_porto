@@ -969,6 +969,14 @@ func myRouter(r *gin.RouterGroup) {
 
 // Serve as a Vercel function
 func Handler(w http.ResponseWriter, r *http.Request) {
-	// defer CloseDB()
+	if orig := r.Header.Get("x-matched-path"); orig != "" {
+		r.URL.Path = orig
+	} else if orig := r.Header.Get("x-forwarded-uri"); orig != "" {
+		r.URL.Path = orig
+	}
+	r.URL.Path = strings.TrimPrefix(r.URL.Path, "/api/entrypoint.go")
+	if r.URL.Path == "" {
+		r.URL.Path = "/"
+	}
 	app.ServeHTTP(w, r)
 }
