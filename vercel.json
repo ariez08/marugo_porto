@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/**/*.go",
+      "src": "api/entrypoint.go",
       "use": "@vercel/go"
     },
     {
@@ -16,7 +16,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "destination": "/api/entrypoint"
     },
     {
       "source": "/(.*)",

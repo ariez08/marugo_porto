@@ -192,7 +192,8 @@ func init() {
 
 	r := app.Group("/api")
 	myRouter(r)
-
+	rootR := app.Group("")
+	myRouter(rootR)
 	// Fetch DATABASE_URL from environment variables
 	databaseUrl := os.Getenv("STORAGE_DATABASE_URL")
 	if databaseUrl == "" {
