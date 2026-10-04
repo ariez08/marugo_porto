@@ -3,6 +3,7 @@ import { logoutUser, getCurrentUser} from "../Api";
 
 interface AuthContextProps {
   isAuthenticated: boolean;
+  loading: boolean;
   user: string | null;
   login: (username: string) => void;
   logout: () => void;
@@ -54,12 +55,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuth();
   }, []);
 
-  if (loading) {
-    return <div></div>; // Atau spinner
-  }
-
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, loading, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

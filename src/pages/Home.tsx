@@ -3,9 +3,9 @@ import Footer from "../components/footer";
 import HomeCard from "../components/home_card";
 import { HiChevronDown } from "react-icons/hi";
 
-import IconPic1 from "../assets/icon_home1.png";
-import IconPic2 from "../assets/icon_home2.png";
-import IconPic3 from "../assets/icon_home3.png";
+import IconPic1 from "../assets/icon_home1.webp";
+import IconPic2 from "../assets/icon_home2.webp";
+import IconPic3 from "../assets/icon_home3.webp";
 import ArrowIcon from "../assets/arrow.svg";
 
 const Main: React.FC = () => {
@@ -28,7 +28,7 @@ const Main: React.FC = () => {
               buttonText="Portofolio" 
               buttonClass="bg-orange"
               delayTime={0.2}
-              buttonLink="/no"
+              buttonLink="/portfolio"
             />
             {/* arrow 1 */}
             <div className="hidden md:block w-48"><img src={ArrowIcon} alt="Arrow" className="object-none"/></div>

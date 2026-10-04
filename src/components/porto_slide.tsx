@@ -1,40 +1,77 @@
-import React from 'react'
-// import 'swiper/css/navigation'
-// import 'swiper/css/pagination'
-
-// const imageFallback: string = "https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjUyOXwwfDF8c2VhcmNofDJ8fGZsb3dlciUyMGNhdHxlbnwwfHx8fDE2ODQ5NTY1MjA&ixlib=rb-4.0.3&q=80&w=400";
+import React from "react";
 
 interface PortoSlideProps {
-    text: string
-    children?: React.ReactNode
-    mainImg?: string
-    leftImg?: string
-    rightImg?: string
-  }
+  text: string;
+  mainImg?: string;
+  leftImg?: string;
+  rightImg?: string;
+  description?: string;
+  altText?: string;
+}
 
 const PortoSlide: React.FC<PortoSlideProps> = ({
   text,
   mainImg,
   leftImg,
   rightImg,
+  description,
+  altText,
 }) => {
   return (
-    <div className='m-4 p-2 text-center justify-center rounded-2xl -z-50 bg-yellow-100 h-full border-4 border-green/30'>
-        <h1 className='bg-white w-fit place-self-center px-4 py-1 m-1 -z-50'>{text}</h1>
-        <div className='container grid grid-cols-4 justify-center items-center p-2 h-full w-full'>
-            <div className='relative w-full h-full'>
-                <img src={leftImg} alt="Porto" className='w-[10vw] absolute bottom-0 -right-6 rounded-2xl'/>
+    <div className="relative mx-auto my-2 p-4 md:p-6 rounded-3xl bg-yellow-100 border-3 border-black-200 shadow-[4px_4px_0px_#1c1c1c] w-full max-w-4xl">
+      {/* Category Badge Header */}
+      <div className="flex justify-center mb-3">
+        <span className="font-londrina text-2xl md:text-3xl text-black-100 bg-white px-6 py-1 rounded-full border-2 border-black-200 shadow-[2px_2px_0px_#1c1c1c]">
+          {text}
+        </span>
+      </div>
+
+      {/* Main Showcase Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center justify-center p-2">
+        {leftImg && (
+          <div className="hidden md:flex justify-end items-center">
+            <img
+              src={leftImg}
+              alt="Left Preview"
+              className="w-28 h-36 object-cover rounded-2xl border-2 border-black-200 shadow-md transform -rotate-3"
+            />
+          </div>
+        )}
+
+        <div className={`flex flex-col items-center justify-center ${leftImg && rightImg ? "md:col-span-2" : "md:col-span-4"}`}>
+          {mainImg ? (
+            <div className="relative rounded-2xl overflow-hidden border-3 border-black-200 shadow-lg bg-white">
+              <img
+                src={mainImg}
+                alt={altText || text}
+                className="max-h-[50vh] w-auto object-contain"
+              />
             </div>
-            <div className='relative w-full h-full col-span-2'>
-                <img src={mainImg} alt="Porto" className='h-[64vh] place-self-center rounded-2xl'/>
+          ) : (
+            <div className="h-48 w-full rounded-2xl border-2 border-dashed border-gray-300 bg-white/60 flex flex-col items-center justify-center p-4">
+              <span className="font-school text-lg text-gray-500">Karya Unggulan {text}</span>
             </div>
-            <div className='relative w-full h-full place-self-start'>
-                <img src={rightImg} alt="Porto" className='w-[10vw] absolute top-0 -left-6 rounded-2xl'/>
-            </div>
+          )}
+
+          {description && (
+            <p className="font-desc text-sm text-gray-600 mt-3 text-center max-w-md">
+              {description}
+            </p>
+          )}
         </div>
+
+        {rightImg && (
+          <div className="hidden md:flex justify-start items-center">
+            <img
+              src={rightImg}
+              alt="Right Preview"
+              className="w-28 h-36 object-cover rounded-2xl border-2 border-black-200 shadow-md transform rotate-3"
+            />
+          </div>
+        )}
+      </div>
     </div>
-  )
-}
+  );
+};
 
-
-export default PortoSlide
+export default PortoSlide;

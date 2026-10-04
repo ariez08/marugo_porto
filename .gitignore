@@ -62,3 +62,6 @@ package-lock.json
 
 .vercel
 .env*.local
+.env*
+.omp/
+*.exe

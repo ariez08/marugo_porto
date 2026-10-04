@@ -1,23 +1,16 @@
 import React, { useState, useRef } from 'react';
-import ToggleSwitch from './logreg_switch';
 import { HiX } from "react-icons/hi";
 import { BsInstagram, BsTiktok } from "react-icons/bs";
-import { motion } from "framer-motion";
-import FooterPic from "../assets/icon_footer.png";
+import { motion, PanInfo } from "framer-motion";
+import FooterPic from "../assets/icon_footer.webp";
 import KeyPic from "../assets/cookie.png";
 import LoginForm from './login_form';
-import RegisterForm from './register_form';
 
 const Footer: React.FC = () => {
   const colors = ['bg-yellow-200', 'bg-lime-green', 'bg-pink', 'bg-orange'];
   const [bgColor, setBgColor] = useState<string[]>(['bg-transparent', 'bg-transparent']);
   const [showPopup, setShowPopup] = useState(false);
-  const [showRegister, setResgister] = useState(false);
   const footerPicRef = useRef<HTMLDivElement>(null);
-
-  const handleToggle = () => {
-    setResgister((prev) => !prev);
-  };
 
   const getRandomColor = (currentColor: string) => {
     let randomColor;
@@ -34,7 +27,7 @@ const Footer: React.FC = () => {
     setBgColor(newColors);
   };
 
-  const handleDragEnd = (_event: any, info: any) => {
+  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const footerPicElement = footerPicRef.current;
     if (!footerPicElement) return;
 
@@ -59,7 +52,7 @@ const Footer: React.FC = () => {
 
 
   return (
-    <footer className="flex flex-col bg-blue mt-5 overflow-hidden">
+    <footer className="relative flex flex-col bg-blue mt-5 overflow-hidden">
       <div className="flex flex-row p-2 text-white">
         <div ref={footerPicRef} className="m-1 pl-2">
           <img src={FooterPic} alt="footer_pic" className="w-16" />
@@ -70,6 +63,8 @@ const Footer: React.FC = () => {
           <div className="">
             <a
               href="https://www.instagram.com/marr._.goo/"
+              target="_blank"
+              rel="noopener noreferrer"
               className={`flex flex-row w-min my-1 text-lg border-2 rounded-lg ${bgColor[0]}`}
               onMouseEnter={() => handleMouseEvent(0, true)}
               onMouseLeave={() => handleMouseEvent(0, false)}
@@ -78,7 +73,9 @@ const Footer: React.FC = () => {
               <span className="pr-2">@marr._.goo</span>
             </a>
             <a
-              href="#"
+              href="https://www.tiktok.com/@keca_uwuuuhh"
+              target="_blank"
+              rel="noopener noreferrer"
               className={`flex flex-row w-min my-1 text-lg border-2 rounded-lg ${bgColor[1]}`}
               onMouseEnter={() => handleMouseEvent(1, true)}
               onMouseLeave={() => handleMouseEvent(1, false)}
@@ -89,9 +86,8 @@ const Footer: React.FC = () => {
           </div>
         </div>
       </div>
-
       <div className='w-8 h-8 absolute bottom-1 right-1'>
-        <motion.img 
+        <motion.img
           src={KeyPic}
           alt="drag_to_reveal"
           className="h-full object-cover cursor-pointer"
@@ -100,21 +96,27 @@ const Footer: React.FC = () => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           whileDrag={{ scale: 0.9, rotate: 5 }}
+          onClick={() => setShowPopup(true)}
           onDragEnd={handleDragEnd}
         />
       </div>
       
 
       {showPopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="relative bg-white p-6 rounded-xl shadow-lg">
-            <h2 className="text-xl font-bold mb-2 text-center underline underline-offset-4 decoration-wavy">You Found The Secret! 😭</h2>
-            <div className='flex gap-2'>
-              <HiX onClick={() => setShowPopup(false)} className='absolute text-red text-xl font-bold right-2 top-2 cursor-pointer'/>
-              {(showRegister) ?
-              <RegisterForm/>:<LoginForm/>}
-              <ToggleSwitch isActive={showRegister} onToggle={handleToggle} />
+        <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-xs z-50 p-4">
+          <div className="relative bg-[#faf5ed] p-6 md:p-8 rounded-3xl shadow-[6px_6px_0px_#1c1c1c] max-w-sm w-full border-3 border-black-200">
+            <button
+              onClick={() => setShowPopup(false)}
+              className="absolute text-red hover:text-black-100 text-2xl font-bold right-3 top-3 cursor-pointer hover:scale-110 transition-transform p-1"
+            >
+              <HiX />
+            </button>
+            <div className="text-center mb-6">
+              <h2 className="font-londrina text-3xl text-black-100">
+                You Found The Secret!
+              </h2>
             </div>
+            <LoginForm />
           </div>
         </div>
       )}
@@ -123,7 +125,9 @@ const Footer: React.FC = () => {
         <hr className="w-1/2 border-2 border-yellow-200 rounded-full" />
       </div>
       <div className="text-center text-md py-2">
-        <p className="font-bold text-white">Copyright &copy; 2025. All Rights Reserved.</p>
+        <p className="font-bold text-white">
+          Copyright &copy; {new Date().getFullYear()}. All Rights Reserved.
+        </p>
       </div>
     </footer>
   );

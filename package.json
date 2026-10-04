@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "bunx --bun vite",
+    "server": "go run main.go",
+    "server:build": "go build -o marugo.exe main.go",
+    "server:bin": "marugo.exe",
     "build": "tsc -b && vite build",
     "start": "bun bunserve ./dist",
     "lint": "eslint .",

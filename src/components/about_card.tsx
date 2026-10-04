@@ -1,24 +1,38 @@
-import React, { ReactNode } from 'react'
-import CatPic from "../assets/flower_cat.png"
+import React, { ReactNode } from "react";
+import CatPic from "../assets/flower_cat.png";
 import { HiOutlineChevronDoubleRight } from "react-icons/hi";
+import { motion } from "framer-motion";
 
 interface AboutCardProps {
-    name: string;
-    children: ReactNode;
-    minSize?: string;
-}
-const AboutCard:React.FC<AboutCardProps> = ({name, children, minSize= "10"}) => {
-  return (
-    <div className='text-white'>
-        <div className='bg-blue border-1 border-white w-min px-3 rounded-full text-nowrap flex'>
-            <h1 className='text-3xl text-white font-name font-semibold'>{name}</h1><HiOutlineChevronDoubleRight className='text-yellow-200 font-bold text-5xl'/>
-        </div>
-        <div className={`relative mt-1 px-4 py-2 pr-8 text-xl border-2 border-white rounded-custom max-w-[50vh] min-w-[${minSize}vw]`}>
-            {children}
-            <img src={CatPic} alt="floweerr" className='absolute -right-3 -bottom-3 w-10'/>
-        </div>
-    </div>
-  )
+  name: string;
+  children: ReactNode;
+  delay?: number;
 }
 
-export default AboutCard
+const AboutCard: React.FC<AboutCardProps> = ({ name, children, delay = 0 }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.5, delay, ease: "easeOut" }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className="text-white w-full max-w-sm flex flex-col"
+    >
+      <div className="bg-blue border-2 border-white w-fit px-4 py-1 rounded-full flex items-center gap-1.5 shadow-md">
+        <h2 className="text-2xl text-white font-name font-semibold">{name}</h2>
+        <HiOutlineChevronDoubleRight className="text-yellow-200 text-3xl font-bold" />
+      </div>
+      <div className="relative mt-2 p-4 sm:p-5 text-sm sm:text-base font-desc border-3 border-white rounded-3xl bg-white/10 backdrop-blur-xs shadow-md grow">
+        {children}
+        <img
+          src={CatPic}
+          alt="Decoration Cat"
+          className="absolute -right-2 -bottom-2 w-9 sm:w-10 pointer-events-none"
+        />
+      </div>
+    </motion.div>
+  );
+};
+
+export default AboutCard;

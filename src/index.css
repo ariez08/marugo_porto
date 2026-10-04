@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Delius&family=Londrina+Shadow&family=Pacifico&family=Schoolbell&family=Sour+Gummy:ital,wght@0,100..900;1,100..900&display=swap')
+@import url('https://fonts.googleapis.com/css2?family=Delius&family=Londrina+Shadow&family=Londrina+Solid:wght@400;900&family=Pacifico&family=Schoolbell&family=Sour+Gummy:ital,wght@0,100..900;1,100..900&display=swap')
 layer(base);
 
 @import 'tailwindcss';
@@ -59,6 +59,7 @@ layer(base);
 
   --font-school: Schoolbell, sans-serif;
   --font-londrina: Londrina Shadow, sans-serif;
+  --font-londrina-solid: "Londrina Solid", sans-serif;
   --font-nav: Pacifico, sans-serif;
   --font-desc: Delius, sans-serif;
   --font-name: Sour Gummy, sans-serif;

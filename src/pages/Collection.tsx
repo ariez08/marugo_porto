@@ -1,9 +1,7 @@
-// Collection.tsx
-
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Navigate } from "react-router-dom";
-import { HiX } from "react-icons/hi";
+import { HiX, HiPlus, HiPhotograph, HiEye } from "react-icons/hi";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchAllImages, ImageData, deleteImageById } from "../Api";
 
@@ -11,192 +9,279 @@ import Nav from "../components/nav";
 import Footer from "../components/footer";
 import ImageUploadForm from "../components/image_form";
 import LoadingSpinner from "../components/loading";
+import CapsuleButton from "../components/capsule_button";
+import PopTitle from "../components/pop_title";
 
-const Collection = () => {
+const Collection: React.FC = () => {
   const [images, setImages] = useState<ImageData[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showImages, setShowImages] = useState(false);
-  const [showUploadForm, setShowUploadForm] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState<ImageData | null>(null);
-  const { isAuthenticated } = useAuth();
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const { isAuthenticated, loading: authLoading } = useAuth();
 
-  if (!isAuthenticated) {
-    console.log("Auth val: ",isAuthenticated)
-    return <Navigate to="/im-not-supposed-here" replace />;
-  }
-
-  const handleShowImages = async () => {
+  const loadImages = async () => {
     setLoading(true);
-    setError(null); // Reset galat sebelumnya
+    setError(null);
     try {
       const data = await fetchAllImages();
-      // Validasi apakah data yang diterima adalah sebuah array
-      if (Array.isArray(data)) {
-        setImages(data);
-      } else {
-        // Jika bukan array, set state menjadi array kosong untuk mencegah galat
-        setImages([]);
-        console.error("Data yang diterima dari API bukan sebuah array:", data);
-        setError('Gagal memuat gambar: format data tidak valid.');
-      }
-    } catch (err: any) {
-      setImages([]); // Pastikan tetap array kosong jika terjadi galat
-      setError(err.message || 'Gagal memuat gambar');
+      setImages(Array.isArray(data) ? data : []);
+    } catch (err: unknown) {
+      setImages([]);
+      setError(err instanceof Error ? err.message : "Gagal memuat gambar");
     } finally {
       setLoading(false);
-      setShowImages(true);
     }
   };
 
-  const handleHideImages = () => {
-    setShowImages(false);
-  };
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadImages();
+    }
+  }, [isAuthenticated]);
 
-  const handleDelete = async (id: number) => {
+  if (authLoading) {
+    return (
+      <div className="relative min-h-screen bg-pink flex items-center justify-center">
+        <div className="w-12 h-12">
+          <LoadingSpinner />
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  const handleDelete = async (image: ImageData) => {
+    const confirmed = window.confirm(`Hapus ilustrasi "${image.name}"?`);
+    if (!confirmed) return;
+
+    setDeletingId(image.id);
     try {
-      await deleteImageById(id);
-      setImages((prevImages) => prevImages.filter((image) => image.id !== id)); // Remove from state
-      alert("Image deleted successfully");
-      if (selectedImage?.id === id) setSelectedImage(null); // Close modal if the deleted image is open
-    } catch (error) {
-      console.error("Error deleting image:", error);
-      alert("Failed to delete image");
+      await deleteImageById(image.id);
+      setImages((prev) => prev.filter((img) => img.id !== image.id));
+      if (selectedImage?.id === image.id) {
+        setSelectedImage(null);
+      }
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Gagal menghapus gambar");
+    } finally {
+      setDeletingId(null);
     }
-  };
-
-  const handleImageClick = (image: ImageData) => {
-    setSelectedImage(image);
   };
 
   return (
-    <div className="relative bg-pink flex flex-col min-h-screen">
-      <Nav text="Collection & Upload"/>
-      <div className="grow">
-        <div className="m-4">
-          <button 
-              onClick={() => setShowUploadForm(true)} 
-              className="px-4 py-2 bg-blue text-white rounded-sm cursor-pointer"
-            >
-              Upload Image
-          </button>
-          <button 
-            onClick={handleShowImages} 
-            disabled={showImages}
-            className={`mx-1 px-4 rounded-sm ${showImages ? 'bg-gray-200 cursor-not-allowed opacity-80 py-1' : 'bg-green text-white py-2 cursor-pointer'}`}
-            >
-            Show
-          </button>
-          <button 
-            onClick={handleHideImages} 
-            disabled={!showImages}
-            className={`mx-1 px-4 rounded-sm ${!showImages ? 'bg-gray-200 cursor-not-allowed opacity-80 py-1' : 'bg-red text-white py-2 cursor-pointer'}`}
-            >
-            Hide
-          </button>
-        </div>
-      
-        {error && <div>{error}</div>}
+    <div className="relative bg-pink flex flex-col min-h-screen text-black-100">
+      <Nav text="KOLEKSI ILUSTRASI" />
 
-        {showImages && (
-          <div 
-            className="mx-4 p-4 overflow-y-scroll overflow-x-hidden md:h-[60vh] md:w-[65vw] grid lg:grid-cols-4 sm:grid-cols-3 ssm:grid-cols-2 gap-8 border-4 border-white rounded-lg" 
-            style={{ gridAutoRows: "60%" }}
+      <main className="grow max-w-6xl w-full mx-auto p-4 md:p-8">
+        {/* Header & Actions */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white border-2 border-black-200 rounded-3xl p-6 shadow-lg mb-8">
+          <div>
+            <PopTitle text="Galeri Koleksi" className="text-4xl md:text-5xl" />
+          </div>
+
+          <CapsuleButton
+            onClick={() => setShowUploadModal(true)}
+            className="bg-yellow-200 hover:bg-yellow-100 flex items-center gap-2"
           >
-            {loading ? (
-              <div className="w-6 h-6"><LoadingSpinner/></div>
-            ) : (
-              images.map((image) => (
-                <motion.div 
-                  id="imageCard" 
-                  key={image.id} 
-                  className="relative cursor-pointer" 
-                  layoutId={`image-${image.id}`} // Shared layout ID
-                  onClick={() => handleImageClick(image)}
-                >
-                  <motion.img
-                    src={image.url}
-                    alt={image.name}
-                    className="w-full h-full rounded-sm shadow-sm object-cover bg-white"
-                    whileHover={{ scale: 1.1 }}
-                  />
-                  {/* <div className="absolute top-1 w-6 h-6 -z-1"><LoadingSpinner/></div> */}
-                  <div className="absolute top-1 right-1">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent triggering the image click event
-                        handleDelete(image.id);
-                      }} 
-                      className="px-2 py-1 bg-red text-white text-xs rounded-sm hover:opacity-80"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                  <div className="bg-black-100/50 rounded-full">
-                    <h3 className="text-center text-sm capitalize font-name text-white text-nowrap mt-1 font-medium">{image.name}</h3>
-                  </div>
-                  
-                </motion.div>
-              ))
-            )}
+            <HiPlus className="text-lg" />
+            <span>Upload Gambar</span>
+          </CapsuleButton>
+        </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-white border-2 border-red rounded-2xl text-red font-bold">
+            {error}
           </div>
         )}
 
-        <AnimatePresence>
-          {selectedImage && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black/70 z-60">
-              <motion.div 
-                className="relative bg-yellow-100 rounded-md shadow-2xl shadow-blue p-4 pr-8 md:max-w-5xl flex md:flex-row ssm:flex-col border-4 border-yellow-200"
-                layoutId={`image-${selectedImage.id}`} // Shared layout ID
-                transition={{ duration: 0.3, ease: "easeOut" }}
+        {/* Grid Gambar */}
+        {loading ? (
+          <div className="py-20 flex justify-center items-center">
+            <div className="w-12 h-12">
+              <LoadingSpinner />
+            </div>
+          </div>
+        ) : images.length === 0 ? (
+          <div className="bg-white/80 backdrop-blur-xs border-2 border-dashed border-gray-300 rounded-3xl p-12 text-center flex flex-col items-center gap-4">
+            <div className="w-20 h-20 rounded-full bg-yellow-100 flex items-center justify-center text-black-100 text-4xl">
+              <HiPhotograph />
+            </div>
+            <div>
+              <h3 className="font-londrina text-3xl text-black-100">Koleksi Masih Kosong</h3>
+              <p className="font-school text-gray-500 text-lg mt-1">
+                Belum ada ilustrasi yang di-upload. Mulai tambahkan karya sekarang!
+              </p>
+            </div>
+            <CapsuleButton
+              onClick={() => setShowUploadModal(true)}
+              className="bg-blue text-white hover:brightness-110"
+            >
+              Upload Karya Pertama
+            </CapsuleButton>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {images.map((image) => (
+              <motion.div
+                key={image.id}
+                layoutId={`image-${image.id}`}
+                whileHover={{ y: -6, transition: { duration: 0.2 } }}
+                className="group relative bg-white border-2 border-black-200 rounded-3xl overflow-hidden shadow-lg flex flex-col"
               >
+                {/* Image Container */}
+                <div
+                  onClick={() => setSelectedImage(image)}
+                  className="relative aspect-square w-full bg-gray-100 overflow-hidden cursor-pointer"
+                >
+                  <img
+                    src={image.url}
+                    alt={image.name}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span className="flex items-center gap-1.5 px-4 py-1.5 bg-white text-black-100 font-bold rounded-full text-xs shadow-md">
+                      <HiEye className="text-base" />
+                      <span>Lihat Detail</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Info Bar */}
+                <div className="p-4 flex flex-col justify-between grow gap-2">
+                  <div>
+                    <div className="flex justify-between items-center gap-2 mb-1">
+                      <span className="text-xs bg-yellow-200 text-black-100 font-bold px-2.5 py-0.5 rounded-full border border-black-200">
+                        {image.category || "Uncategorized"}
+                      </span>
+                    </div>
+                    <h3 className="font-londrina text-2xl text-black-100 truncate" title={image.name}>
+                      {image.name}
+                    </h3>
+                    {image.description && (
+                      <p className="font-desc text-xs text-gray-500 line-clamp-2 mt-1">
+                        {image.description}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
+                    <CapsuleButton
+                      onClick={() => setSelectedImage(image)}
+                      className="bg-yellow-200 text-xs py-1 px-4"
+                    >
+                      Buka
+                    </CapsuleButton>
+                    <CapsuleButton
+                      onClick={() => handleDelete(image)}
+                      disabled={deletingId === image.id}
+                      className="bg-red text-white text-xs py-1 px-3"
+                    >
+                      {deletingId === image.id ? "Menghapus..." : "Hapus"}
+                    </CapsuleButton>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </main>
+
+      {/* Modal Upload Pop-up */}
+      <AnimatePresence>
+        {showUploadModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative bg-white border-2 border-black-200 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl max-h-[90vh] overflow-y-auto"
+            >
+              <button
+                onClick={() => setShowUploadModal(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-black-100 p-1 cursor-pointer"
+              >
+                <HiX className="text-2xl" />
+              </button>
+              <h2 className="font-londrina text-3xl mb-6 text-black-100">Upload Karya Baru</h2>
+
+              <ImageUploadForm
+                onSuccess={() => {
+                  setShowUploadModal(false);
+                  loadImages();
+                }}
+              />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Detail Gambar */}
+      <AnimatePresence>
+        {selectedImage && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black/75 backdrop-blur-xs z-50 p-4">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative bg-white border-3 border-black-200 rounded-3xl p-4 md:p-6 max-w-4xl w-full max-h-[90vh] flex flex-col md:flex-row gap-6 shadow-2xl overflow-y-auto"
+            >
+              <button
+                onClick={() => setSelectedImage(null)}
+                className="absolute top-3 right-3 text-red bg-white rounded-full p-1 border border-black-200 hover:scale-110 transition-transform cursor-pointer z-10"
+              >
+                <HiX className="text-2xl" />
+              </button>
+
+              <div className="md:w-3/5 bg-gray-100 rounded-2xl overflow-hidden flex items-center justify-center border-2 border-gray-200">
                 <img
                   src={selectedImage.url}
                   alt={selectedImage.name}
-                  className="md:max-w-3xl ssm:max-w-[80vw] md:max-h-[90vh] ssm:max-h-[50vh] object-contain rounded-lg border-2 border-green bg-linear-to-r from-purple-100 to-purple-200"
+                  className="max-h-[70vh] w-full object-contain"
                 />
-                <div className="ml-4 ssm:m-3 flex flex-row md:flex-col justify-between">
-                  <div className="m-2">
-                    <h2 className="m-1 px-1 rounded-md place-self-end font-bold font-name text-yellow-200 bg-green w-fit">{selectedImage.category}</h2>
-                    <div className="p-2 bg-white rounded-xl">
-                      <h2 className="text-xl font-bold mb-1 ml-1 capitalize font-name">{selectedImage.name}</h2>
-                      <p className="px-2 py-1 text-sm bg-white-300 rounded-lg">{selectedImage.description}</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => {
-                      handleDelete(selectedImage.id);
-                      setSelectedImage(null);
-                    }} 
-                    className="w-min h-min px-4 py-2 bg-red text-white rounded-full hover:bg-red-700 m-2 cursor-pointer"
-                  >
-                    Delete
-                  </button>
-                  <HiX onClick={() => setSelectedImage(null)} className='absolute text-red text-xl font-bold right-2 top-2 cursor-pointer rounded-full bg-white'/>
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
+              </div>
 
-        {showUploadForm && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/70">
-            <div className="bg-white p-6 rounded-sm shadow-lg w-96">
-              <ImageUploadForm />
-              <button 
-                onClick={() => {
-                  setShowUploadForm(false)
-                  handleShowImages()
-                }} 
-                className="mt-4 px-4 py-2 bg-red text-white rounded-sm"
-              >
-                Close
-              </button>
-            </div>
+              <div className="md:w-2/5 flex flex-col justify-between gap-4 font-desc">
+                <div>
+                  <span className="inline-block text-xs font-bold bg-yellow-200 text-black-100 px-3 py-1 rounded-full border border-black-200 mb-2">
+                    {selectedImage.category || "Uncategorized"}
+                  </span>
+                  <h2 className="font-londrina text-4xl text-black-100 mb-2">
+                    {selectedImage.name}
+                  </h2>
+                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+                    {selectedImage.description || "Tidak ada deskripsi untuk karya ini."}
+                  </p>
+                </div>
+
+                <div className="pt-4 border-t border-gray-200 flex justify-between items-center">
+                  <a
+                    href={selectedImage.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs font-bold text-blue underline"
+                  >
+                    Buka File Asli
+                  </a>
+                  <CapsuleButton
+                    onClick={() => handleDelete(selectedImage)}
+                    className="bg-red text-white text-xs py-1 px-4"
+                  >
+                    Hapus Karya
+                  </CapsuleButton>
+                </div>
+              </div>
+            </motion.div>
           </div>
         )}
-      </div>
-      <Footer/>
+      </AnimatePresence>
+
+      <Footer />
     </div>
   );
 };

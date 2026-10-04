@@ -17,11 +17,6 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jackc/pgx/v4"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/google/uuid"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -30,10 +25,77 @@ import (
 var (
 	app 		*gin.Engine
 	db        	*pgxpool.Pool
-	s3Client  	*s3.Client
-	accessTokenKey = []byte(os.Getenv("DIMAS_JWT_ACCESS_TOKEN"))
-	refreshTokenKey = []byte(os.Getenv("DIMAS_JWT_REFRESH_TOKEN"))
+	accessTokenKey []byte
+	refreshTokenKey []byte
 )
+
+func loadDotEnv() {
+	for _, filename := range []string{".env.local", ".env"} {
+		data, err := os.ReadFile(filename)
+		if err != nil {
+			continue
+		}
+		for _, line := range strings.Split(string(data), "\n") {
+			line = strings.TrimSpace(line)
+			if line == "" || strings.HasPrefix(line, "#") {
+				continue
+			}
+			parts := strings.SplitN(line, "=", 2)
+			if len(parts) == 2 {
+				key := strings.TrimSpace(parts[0])
+				val := strings.Trim(strings.TrimSpace(parts[1]), `"'`)
+				if os.Getenv(key) == "" {
+					os.Setenv(key, val)
+				}
+			}
+		}
+	}
+}
+
+func resolveImageUrl(key string) string {
+	if key == "" {
+		return ""
+	}
+	if strings.HasPrefix(key, "http://") || strings.HasPrefix(key, "https://") {
+		return key
+	}
+	clean := strings.TrimPrefix(key, "/")
+	return "/" + clean
+}
+
+func corsMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		origin := c.Request.Header.Get("Origin")
+		if origin != "" {
+			c.Header("Access-Control-Allow-Origin", origin)
+			c.Header("Access-Control-Allow-Credentials", "true")
+			c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, Cookie")
+		}
+		if c.Request.Method == http.MethodOptions {
+			c.AbortWithStatus(http.StatusOK)
+			return
+		}
+		c.Next()
+	}
+}
+
+func ensureJwtKeys() {
+	if len(accessTokenKey) == 0 {
+		secret := os.Getenv("DIMAS_JWT_ACCESS_TOKEN")
+		if secret == "" {
+			secret = "marugo_access_secret_key_default_2026"
+		}
+		accessTokenKey = []byte(secret)
+	}
+	if len(refreshTokenKey) == 0 {
+		secret := os.Getenv("DIMAS_JWT_REFRESH_TOKEN")
+		if secret == "" {
+			secret = "marugo_refresh_secret_key_default_2026"
+		}
+		refreshTokenKey = []byte(secret)
+	}
+}
 
 type Claims struct {
     Username string `json:"username"`
@@ -50,15 +112,33 @@ func isValidImageType(mimeType string) bool {
 	return allowedTypes[mimeType]
 }
 
-func isValidUser(username, password string) bool {
-    var storedHash string
-    err := db.QueryRow(context.Background(), "SELECT password FROM users WHERE username = $1", username).Scan(&storedHash)
-    if err != nil {
-        return false
-    }
+func isValidUser(loginInput, password string) (bool, string) {
+	cleanInput := strings.TrimSpace(loginInput)
+	var actualUsername string
+	var storedHash string
 
-    // Misalnya kamu simpan password pakai bcrypt:
-    return bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(password)) == nil
+	err := db.QueryRow(context.Background(),
+		"SELECT username, password FROM users WHERE LOWER(username) = LOWER($1) OR LOWER(email) = LOWER($1)",
+		cleanInput,
+	).Scan(&actualUsername, &storedHash)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			log.Printf("[AUTH] Login failed: User/Email '%s' tidak ditemukan di database", cleanInput)
+		} else {
+			log.Printf("[AUTH] Login error query database: %v", err)
+		}
+		return false, ""
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(password))
+	if err != nil {
+		log.Printf("[AUTH] Login failed: Password salah untuk user '%s'", actualUsername)
+		return false, ""
+	}
+
+	log.Printf("[AUTH] Login SUCCESS untuk user '%s'", actualUsername)
+	return true, actualUsername
 }
 
 func GenerateAccessToken(username string) (string, error) {
@@ -95,76 +175,66 @@ func MeHandler(c *gin.Context) {
     c.JSON(http.StatusOK, gin.H{"username": user})
 }
 
-// func CloseDB() {
-//     if db != nil {
-//         db.Close()
-//         fmt.Println("Database connection closed")
-//     }
-// }
-
 
 func init() {
+	loadDotEnv()
+	ensureJwtKeys()
+
 	gin.SetMode(gin.ReleaseMode)
 	app = gin.New()
-    app.SetTrustedProxies([]string{"https://marugo-porto.vercel.app/api"})
+	_ = app.SetTrustedProxies(nil)
+	app.Use(gin.Logger())
+	app.Use(gin.Recovery())
+	app.Use(corsMiddleware())
+
+	// Serve static assets from public/images
+	app.Static("/images", "./public/images")
+
 	r := app.Group("/api")
 	myRouter(r)
 
 	// Fetch DATABASE_URL from environment variables
 	databaseUrl := os.Getenv("STORAGE_DATABASE_URL")
+	if databaseUrl == "" {
+		databaseUrl = os.Getenv("STORAGE_POSTGRES_URL")
+	}
+	if databaseUrl == "" {
+		databaseUrl = os.Getenv("DATABASE_URL")
+	}
 
 	if databaseUrl == "" {
-		log.Fatalf("Missing database url variable: -> %v <- there", databaseUrl)
+		log.Printf("Warning: no database URL configured in environment")
+		return
 	}
+
 	poolConfig, err := pgxpool.ParseConfig(databaseUrl)
-    if err != nil {
-        log.Fatalf("Error parsing database config: %v", err)
-    }
-
-    // Configure pool settings
-    poolConfig.MaxConns = 25
-    poolConfig.MinConns = 5
-
-    // Assign to GLOBAL variable (use =, not :=)
-    db, err = pgxpool.ConnectConfig(context.Background(), poolConfig)
-    if err != nil {
-        log.Fatalf("Unable to connect to database: %v", err)
-    }
-
-    // Verify connection
-    err = db.Ping(context.Background())
-    if err != nil {
-        log.Fatalf("Database ping failed: %v", err)
-    }
-
-	// Load environment variables
-	var aws_err error
-	awsConfig, aws_err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion(os.Getenv("DIMAS_AWS_REGION")),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
-			os.Getenv("DIMAS_AWS_ACCESS_KEY_ID"),
-			os.Getenv("DIMAS_AWS_SECRET_ACCESS_KEY"),
-			"",
-		)),
-	)
-	if aws_err != nil {
-		log.Fatal("AWS config error:", aws_err)
+	if err != nil {
+		log.Printf("Warning: error parsing database config: %v", err)
+		return
 	}
 
-	// Initialize S3 client
-	s3Client = s3.NewFromConfig(awsConfig)
+	poolConfig.MaxConns = 15
+	poolConfig.MinConns = 2
+
+	db, err = pgxpool.ConnectConfig(context.Background(), poolConfig)
+	if err != nil {
+		log.Printf("Warning: unable to connect to database: %v", err)
+		return
+	}
+
+	err = db.Ping(context.Background())
+	if err != nil {
+		log.Printf("Warning: database ping failed: %v", err)
+	} else {
+		log.Printf("Database connection verified successfully")
+	}
 }
 
 // Ping route for health checks
 func ping(c *gin.Context) {
-	var test string = os.Getenv("DIMAS_AWS_REGION")
-	var test1 string = os.Getenv("DIMAS_JWT_ACCESS_TOKEN")
-	var test2 string = os.Getenv("DIMAS_JWT_REFRESH_TOKEN")
 	c.JSON(http.StatusOK, gin.H{
 		"message": "pong",
-		"aws_region": test,
-		"satu": test1,
-		"dua": test2,
+		"status":  "ready",
 	})
 }
 
@@ -181,9 +251,10 @@ func LoginUserHandler(c *gin.Context) {
         return
     }
 
-    if isValidUser(creds.Username, creds.Password) {
-        accessToken, _ := GenerateAccessToken(creds.Username)
-        refreshToken, _ := GenerateRefreshToken(creds.Username)
+    valid, actualUsername := isValidUser(creds.Username, creds.Password)
+    if valid {
+        accessToken, _ := GenerateAccessToken(actualUsername)
+        refreshToken, _ := GenerateRefreshToken(actualUsername)
 
         c.SetCookie("access_token", accessToken, 1800, "/", "", false, true)
         c.SetCookie("refresh_token", refreshToken, 7*24*3600, "/refresh-token", "", false, true)
@@ -250,6 +321,130 @@ func createUserHandler(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{"message": "User berhasil dibuat"})
 }
+func listUsersHandler(c *gin.Context) {
+	rows, err := db.Query(context.Background(),
+		"SELECT id, username, email, COALESCE(TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI:SS'), '') FROM users ORDER BY id ASC",
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users"})
+		return
+	}
+	defer rows.Close()
+
+	type UserResponse struct {
+		ID        int    `json:"id"`
+		Username  string `json:"username"`
+		Email     string `json:"email"`
+		CreatedAt string `json:"created_at"`
+	}
+
+	var userList []UserResponse
+	for rows.Next() {
+		var u UserResponse
+		if err := rows.Scan(&u.ID, &u.Username, &u.Email, &u.CreatedAt); err != nil {
+			continue
+		}
+		userList = append(userList, u)
+	}
+
+	if userList == nil {
+		userList = []UserResponse{}
+	}
+
+	c.JSON(http.StatusOK, userList)
+}
+
+func deleteUserHandler(c *gin.Context) {
+	idStr := c.Param("id")
+	targetID, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	currentUsername := c.MustGet("username").(string)
+
+	var targetUsername string
+	err = db.QueryRow(context.Background(), "SELECT username FROM users WHERE id = $1", targetID).Scan(&targetUsername)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		return
+	}
+
+	if targetUsername == currentUsername {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Tidak dapat menghapus akun yang sedang aktif digunakan"})
+		return
+	}
+
+	var count int
+	err = db.QueryRow(context.Background(), "SELECT COUNT(*) FROM users").Scan(&count)
+	if err == nil && count <= 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Tidak dapat menghapus satu-satunya user tersisa"})
+		return
+	}
+
+	_, err = db.Exec(context.Background(), "DELETE FROM users WHERE id = $1", targetID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghapus user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User berhasil dihapus"})
+}
+
+func updateUserHandler(c *gin.Context) {
+	idStr := c.Param("id")
+	targetID, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	var req struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	if req.Email == "" && req.Password == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Minimal email atau password harus diisi"})
+		return
+	}
+
+	if req.Password != "" {
+		if len(req.Password) < 6 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Password minimal 6 karakter"})
+			return
+		}
+		hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal hash password"})
+			return
+		}
+		if req.Email != "" {
+			_, err = db.Exec(context.Background(), "UPDATE users SET email = $1, password = $2, updated_at = NOW() WHERE id = $3", req.Email, string(hashed), targetID)
+		} else {
+			_, err = db.Exec(context.Background(), "UPDATE users SET password = $1, updated_at = NOW() WHERE id = $2", string(hashed), targetID)
+		}
+	} else {
+		_, err = db.Exec(context.Background(), "UPDATE users SET email = $1, updated_at = NOW() WHERE id = $2", req.Email, targetID)
+	}
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User berhasil diperbarui"})
+}
+
 
 func AuthGinMiddleware() gin.HandlerFunc {
     return func(c *gin.Context) {
@@ -314,68 +509,81 @@ func LogoutHandlerGin(c *gin.Context) {
 }
 
 func uploadImage(c *gin.Context) {
-    // Inisialisasi transaksi
-    tx, err := db.Begin(context.Background())
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
-        return
-    }
-    defer tx.Rollback(context.Background())
-
-    // Proses upload file
-    file, header, _ := c.Request.FormFile("image")
-    defer file.Close()
-
-	// Validate file type
-	if !isValidImageType(header.Header.Get("Content-Type")) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid image format. Only PNG/JPEG allowed"})
+	if db == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Database connection is not available"})
 		return
 	}
 
-    // Generate S3 key
-    ext := filepath.Ext(header.Filename)
-    objectKey := fmt.Sprintf("images/%s%s", uuid.New().String(), ext)
+	tx, err := db.Begin(context.Background())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction: " + err.Error()})
+		return
+	}
+	defer tx.Rollback(context.Background())
 
-    // Insert ke database DALAM TRANSAKSI
-    var imageID int
-    err = tx.QueryRow(context.Background(),
-        `INSERT INTO images (name, category_id, description, s3_key) 
-        VALUES ($1, $2, $3, $4) RETURNING id`,
-        c.PostForm("name"),
-        c.PostForm("category_id"),
-        c.PostForm("description"),
-        objectKey,
-    ).Scan(&imageID)
+	file, header, err := c.Request.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "File image is required"})
+		return
+	}
+	defer file.Close()
 
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
-        return
-    }
+	if !isValidImageType(header.Header.Get("Content-Type")) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid image format. Only PNG/JPEG/WEBP allowed"})
+		return
+	}
 
-    // Upload ke S3
-    _, err = s3Client.PutObject(context.TODO(), &s3.PutObjectInput{
-        Bucket: aws.String("myport-crunchy-personal"),
-        Key:    aws.String(objectKey),
-        Body:   file,
-		ContentType: aws.String(header.Header.Get("Content-Type")),
-		ACL:         types.ObjectCannedACLPrivate,
-    })
+	ext := strings.ToLower(filepath.Ext(header.Filename))
+	if ext == "" {
+		ext = ".png"
+	}
+	fileName := fmt.Sprintf("%s%s", uuid.New().String(), ext)
+	objectKey := fmt.Sprintf("images/%s", fileName)
 
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "S3 upload failed"})
-        return
-    }
+	// Save to local project directory: public/images/
+	uploadDir := filepath.Join("public", "images")
+	_ = os.MkdirAll(uploadDir, 0755)
+	destPath := filepath.Join(uploadDir, fileName)
+	if err := c.SaveUploadedFile(header, destPath); err != nil {
+		tmpDir := filepath.Join(os.TempDir(), "images")
+		_ = os.MkdirAll(tmpDir, 0755)
+		_ = c.SaveUploadedFile(header, filepath.Join(tmpDir, fileName))
+	}
 
-    // Commit transaksi jika semua sukses
-    if err := tx.Commit(context.Background()); err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Transaction commit failed"})
-        return
-    }
+	var imageID int
+	err = tx.QueryRow(context.Background(),
+		`INSERT INTO images (name, category_id, description, s3_key)
+		VALUES ($1, $2, $3, $4) RETURNING id`,
+		c.PostForm("name"),
+		c.PostForm("category_id"),
+		c.PostForm("description"),
+		objectKey,
+	).Scan(&imageID)
 
-    c.JSON(http.StatusOK, gin.H{"id": imageID, "s3_key": objectKey, "message": "Image uploaded"})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error: " + err.Error()})
+		return
+	}
+
+	if err := tx.Commit(context.Background()); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Transaction commit failed: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"id":      imageID,
+		"s3_key":  objectKey,
+		"url":     resolveImageUrl(objectKey),
+		"message": "Image uploaded successfully",
+	})
 }
 
 func getOneImage(c *gin.Context) {
+	if db == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Database connection is not available"})
+		return
+	}
+
 	id := c.Param("id")
 	var image struct {
 		ID          int    `json:"id"`
@@ -383,12 +591,12 @@ func getOneImage(c *gin.Context) {
 		Name        string `json:"name"`
 		CategoryID  int    `json:"category_id"`
 		Description string `json:"description"`
-		Url 		string `json:"url"`
+		Url         string `json:"url"`
 	}
 
 	err := db.QueryRow(context.Background(),
-		`SELECT id, s3_key, name, category_id, description 
-		FROM images 
+		`SELECT id, s3_key, name, category_id, description
+		FROM images
 		WHERE id = $1`, id,
 	).Scan(&image.ID, &image.S3Key, &image.Name, &image.CategoryID, &image.Description)
 
@@ -397,36 +605,28 @@ func getOneImage(c *gin.Context) {
 		return
 	}
 
-	// Generate pre-signed URL
-	presignClient := s3.NewPresignClient(s3Client)
-	presignedUrl, err := presignClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
-		Bucket: aws.String("myport-crunchy-personal"),
-		Key:    aws.String(image.S3Key),
-	}, s3.WithPresignExpires(15*time.Minute))
-	
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "URL generation failed"})
-		return
-	}
-	image.Url = presignedUrl.URL
-
+	image.Url = resolveImageUrl(image.S3Key)
 	c.JSON(http.StatusOK, image)
 }
 
 func getAllImages(c *gin.Context) {
+	if db == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Database connection is not available"})
+		return
+	}
+
 	rows, err := db.Query(context.Background(),
-		`SELECT 
-			i.id, 
-			i.s3_key, 
-			i.name, 
-			c.name as category_name, 
-			i.description 
+		`SELECT
+			i.id,
+			i.s3_key,
+			i.name,
+			c.name as category_name,
+			i.description
 		FROM images i
-		JOIN categories c ON i.category_id = c.id
-		WHERE i.s3_key LIKE 'images/%'`)
-	
+		JOIN categories c ON i.category_id = c.id`)
+
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query database"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query database: " + err.Error()})
 		return
 	}
 	defer rows.Close()
@@ -442,18 +642,7 @@ func getAllImages(c *gin.Context) {
 		)
 
 		if err := rows.Scan(&id, &s3Key, &name, &categoryName, &description); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse data"})
-			return
-		}
-
-		presignClient := s3.NewPresignClient(s3Client)
-		presignedUrl, err := presignClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
-			Bucket: aws.String("myport-crunchy-personal"),
-			Key:    aws.String(s3Key),
-		}, s3.WithPresignExpires(15*time.Minute))
-
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "URL generation failed for " + s3Key})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse data: " + err.Error()})
 			return
 		}
 
@@ -463,70 +652,69 @@ func getAllImages(c *gin.Context) {
 			"s3_key":      s3Key,
 			"category":    categoryName,
 			"description": description,
-			"url":         presignedUrl.URL,
+			"url":         resolveImageUrl(s3Key),
 		})
 	}
 
-	if len(images) == 0 {
-		c.JSON(http.StatusOK, gin.H{"images": []interface{}{}})
-		return
+	if images == nil {
+		images = []gin.H{}
 	}
 
 	c.JSON(http.StatusOK, images)
 }
 
 func deleteImage(c *gin.Context) {
-    // Mulai transaksi
-    tx, err := db.Begin(context.Background())
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
-        return
-    }
-    defer tx.Rollback(context.Background())
+	if db == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Database connection is not available"})
+		return
+	}
 
-    imageID, _ := strconv.Atoi(c.Param("id"))
-    
-    // Ambil S3 key dengan row locking
-    var s3Key string
-    err = tx.QueryRow(context.Background(),
-        "SELECT s3_key FROM images WHERE id = $1 FOR UPDATE", imageID,
-    ).Scan(&s3Key)
+	tx, err := db.Begin(context.Background())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction: " + err.Error()})
+		return
+	}
+	defer tx.Rollback(context.Background())
 
-    if err != nil {
-        if err == pgx.ErrNoRows {
-            c.JSON(http.StatusNotFound, gin.H{"error": "Image not found"})
-        } else {
-            c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
-        }
-        return
-    }
+	imageID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid image ID"})
+		return
+	}
 
-    // Hapus dari database DALAM TRANSAKSI
-    _, err = tx.Exec(context.Background(),
-        "DELETE FROM images WHERE id = $1", imageID,
-    )
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete record"})
-        return
-    }
+	var s3Key string
+	err = tx.QueryRow(context.Background(),
+		"SELECT s3_key FROM images WHERE id = $1 FOR UPDATE", imageID,
+	).Scan(&s3Key)
 
-    // Hapus dari S3
-    _, err = s3Client.DeleteObject(context.TODO(), &s3.DeleteObjectInput{
-        Bucket: aws.String("myport-crunchy-personal"),
-        Key:    aws.String(s3Key),
-    })
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "S3 delete failed"})
-        return
-    }
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Image not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error: " + err.Error()})
+		}
+		return
+	}
 
-    // Commit transaksi
-    if err := tx.Commit(context.Background()); err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Transaction commit failed"})
-        return
-    }
+	_, err = tx.Exec(context.Background(),
+		"DELETE FROM images WHERE id = $1", imageID,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete record: " + err.Error()})
+		return
+	}
 
-    c.JSON(http.StatusOK, gin.H{"message": "Image deleted successfully"})
+	// Delete local file if present
+	cleanPath := strings.TrimPrefix(s3Key, "/")
+	localPath := filepath.Join("public", cleanPath)
+	_ = os.Remove(localPath)
+
+	if err := tx.Commit(context.Background()); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Transaction commit failed: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Image deleted successfully"})
 }
 
 func updateImage(c *gin.Context) {
@@ -630,6 +818,7 @@ func updateImage(c *gin.Context) {
         CategoryID  int    `json:"category_id"`
         Description string `json:"description"`
         S3Key       string `json:"s3_key"`
+        Url         string `json:"url"`
     }
     
     err = db.QueryRow(context.Background(),
@@ -642,7 +831,7 @@ func updateImage(c *gin.Context) {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch updated data"})
         return
     }
-
+    updatedImage.Url = resolveImageUrl(updatedImage.S3Key)
     c.JSON(http.StatusOK, updatedImage)
 }
 
@@ -692,33 +881,89 @@ func addCategory(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Category added successfully"})
 }
+func getCarouselItems(c *gin.Context) {
+	query := `
+		SELECT 
+			ci.id,
+			COALESCE(m.s3_key, ''),
+			COALESCE(l.s3_key, ''),
+			COALESCE(r.s3_key, ''),
+			COALESCE(cat.name, 'Illustration'),
+			COALESCE(ci.description, ''),
+			COALESCE(ci.alt_text, '')
+		FROM carousel_items ci
+		LEFT JOIN images m ON ci.main_img = m.id
+		LEFT JOIN images l ON ci.left_img = l.id
+		LEFT JOIN images r ON ci.right_img = r.id
+		LEFT JOIN categories cat ON ci.category_id = cat.id
+		WHERE ci.is_active = true
+		ORDER BY ci.id ASC
+	`
+	rows, err := db.Query(context.Background(), query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch carousel items"})
+		return
+	}
+	defer rows.Close()
+
+	type CarouselResp struct {
+		ID          int    `json:"id"`
+		MainUrl     string `json:"main_url"`
+		LeftUrl     string `json:"left_url"`
+		RightUrl    string `json:"right_url"`
+		Category    string `json:"category"`
+		Description string `json:"description"`
+		AltText     string `json:"alt_text"`
+	}
+
+	var list []CarouselResp
+	for rows.Next() {
+		var item CarouselResp
+		var mainKey, leftKey, rightKey string
+		if err := rows.Scan(&item.ID, &mainKey, &leftKey, &rightKey, &item.Category, &item.Description, &item.AltText); err != nil {
+			continue
+		}
+		item.MainUrl = resolveImageUrl(mainKey)
+		item.LeftUrl = resolveImageUrl(leftKey)
+		item.RightUrl = resolveImageUrl(rightKey)
+		list = append(list, item)
+	}
+
+	if list == nil {
+		list = []CarouselResp{}
+	}
+
+	c.JSON(http.StatusOK, list)
+}
+
 
 func myRouter(r *gin.RouterGroup) {
-	// Routes
+	// Public routes
 	r.GET("/pingthefuckoutofme", ping)
-    r.POST("/login", LoginUserHandler)
-	r.POST("/create", createUserHandler)
+	r.POST("/login", LoginUserHandler)
 	r.POST("/logout", LogoutHandlerGin)
+	// Public reads for portfolio visitors
+	r.GET("/categories", getCategories)
+	r.GET("/images", getAllImages)
+	r.GET("/image/:id", getOneImage)
+	r.GET("/carousel", getCarouselItems)
 
-	authRoutes := r.Use(AuthGinMiddleware()) 
+	// Protected routes requiring authentication
+	auth := r.Group("", AuthGinMiddleware())
 	{
-		authRoutes.GET("/me", func(c *gin.Context) {
-            username := c.MustGet("username").(string)
-            c.JSON(http.StatusOK, gin.H{"username": username})
-        })
-
-		// Image Categories
-		r.GET("/categories", getCategories)
-		r.POST("/categories", addCategory)
-
-		// Images
-		r.POST("/imgupl", uploadImage)
-		r.GET("/images", getAllImages)
-		r.GET("/image/:id", getOneImage)
-		r.DELETE("/imgdel/:id", deleteImage)
-		r.PUT("/imgupd/:id", updateImage)
+		auth.GET("/me", func(c *gin.Context) {
+			username := c.MustGet("username").(string)
+			c.JSON(http.StatusOK, gin.H{"username": username})
+		})
+		auth.GET("/users", listUsersHandler)
+		auth.POST("/users", createUserHandler)
+		auth.PUT("/users/:id", updateUserHandler)
+		auth.DELETE("/users/:id", deleteUserHandler)
+		auth.POST("/categories", addCategory)
+		auth.POST("/imgupl", uploadImage)
+		auth.DELETE("/imgdel/:id", deleteImage)
+		auth.PUT("/imgupd/:id", updateImage)
 	}
-	
 }
 
 // Serve as a Vercel function

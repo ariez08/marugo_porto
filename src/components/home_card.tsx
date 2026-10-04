@@ -45,6 +45,7 @@ const HomeCard: React.FC<HomeCardProps> = ({
         text={buttonText}
         className={buttonClass}
         to={buttonLink}
+        containerClassName="md:mt-4 ssm:ml-8 md:ml-0"
       />
     </motion.div>
   );
